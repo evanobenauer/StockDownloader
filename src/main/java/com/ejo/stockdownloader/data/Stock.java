@@ -69,7 +69,8 @@ public class Stock {
      */
     public void updateData(double liveDelayS) {
         //Only allows for data collection during trading day hours
-        //if (currentTime.isWeekend() || currentTime.getHourInt() >= 16 || currentTime.getHourInt() < 9 || (currentTime.getHourInt() == 9 && currentTime.getMinuteInt() < 30)) return;
+        DateTime ct = DateTime.getCurrentDateTime();
+        if (ct.isWeekend() || ct.getHourInt() >= 16 || ct.getHourInt() < 9 || (ct.getHourInt() == 9 && ct.getMinuteInt() < 30)) return;
 
         //Updates the progress bar of each segmentation
         updateSegmentationPercentage();
