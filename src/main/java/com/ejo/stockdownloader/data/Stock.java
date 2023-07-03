@@ -234,14 +234,12 @@ public class Stock {
      * @return
      */
     public boolean shouldUpdate() {
-        DateTime ct = StockUtil.getAdjustedCurrentTime();
-
         //Wait until the start of the candle timeframe to allow updates
         if (shouldOpen()) setUpdatesStarted(true);
         if (!shouldStartUpdates()) return false;
 
         //Only allows for data collection during trading day hours
-        if (!StockUtil.isTradingHours(ct)) return false;
+        if (!StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime())) return false;
 
         //Finally, if all checks pass, return true
         return true;
