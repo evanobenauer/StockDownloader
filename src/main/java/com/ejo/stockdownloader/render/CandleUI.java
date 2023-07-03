@@ -33,7 +33,7 @@ public class CandleUI extends ElementUI {
         this.scale = scale;
     }
 
-    //Current Candle
+    //Current Candle. Current candles have a dateTime of NULL
     public CandleUI(Scene scene, Stock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
         this(scene,stock,null,x,focusY,focusPrice,width,scale);
     }
@@ -41,18 +41,17 @@ public class CandleUI extends ElementUI {
     @Override
     public void draw() {
         super.draw();
-        double wickWidth = getWidth()*getScale().getX()/6;
-        double candleHeight = -(getStock().getClose(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY();
+        double wickWidth = getBodySize().getX()/6 * getScale().getX();
 
         //Wicks
         int colorOffset = 100;
         ColorE wickColor = new ColorE(getColor().getRed() - colorOffset, getColor().getGreen() - colorOffset, getColor().getBlue() - colorOffset);
-        QuickDraw.drawRect(null,getPos().getAdded((getWidth()*getScale().getX() / 2) - (wickWidth*getScale().getX() / 2),0),new Vector(wickWidth * getScale().getX(), -(getStock().getMax(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY()), wickColor);
-        QuickDraw.drawRect(null,getPos().getAdded((getWidth()*getScale().getX() / 2) - (wickWidth*getScale().getX() / 2),0),new Vector(wickWidth * getScale().getX(), (getStock().getOpen(getDateTime()) - getStock().getMin(getDateTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(null,getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(null,getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getDateTime()) - getStock().getMin(getDateTime()))*getScale().getY()), wickColor);
 
         //Body
-        QuickDraw.drawRect(null, getPos().getAdded(0,candleHeight/2),new Vector(getWidth()*getScale().getX(),1),getColor()); //Base Gray Candle
-        QuickDraw.drawRect(null,getPos(),new Vector(getWidth()*getScale().getX(),candleHeight),getColor());
+        QuickDraw.drawRect(null, getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
+        QuickDraw.drawRect(null,getPos(),getBodySize(),getColor());
 
     }
 
@@ -74,8 +73,8 @@ public class CandleUI extends ElementUI {
     }
 
     public ColorE getColor() {
-        if (isGreen()) return new ColorE(0, 200, 0);
-        if (isRed()) return new ColorE(200, 0, 0);
+        if (isGreen()) return new ColorE(75, 200, 75);
+        if (isRed()) return new ColorE(200, 50, 50);
         return ColorE.GRAY;
     }
 

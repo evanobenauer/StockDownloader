@@ -5,34 +5,49 @@ import com.ejo.glowlib.misc.Container;
 import com.ejo.glowlib.misc.DoOnce;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import com.ejo.stockdownloader.util.StockUtil;
+import com.ejo.stockdownloader.util.TimeFrame;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-//TODO: Learn to Calculate Volume, then add to CSV
+/**
+ * The stock class is a multi use class. It encompasses both loading historical data and adding new data to said history. The live data is updated
+ * by a method whenever it is called
+ */
 public class Stock {
 
-    private HashMap<Long,String[]> dataHash;
-
+    //Stock Information
     private final String ticker;
     private final TimeFrame timeFrame;
 
+    //Historical Data HashMap
+    private HashMap<Long,String[]> dataHash;
+
+    //Segmentation Start Time
     private DateTime startTime;
 
+    //Segment finished percentage
     private final Container<Double> closePercent;
 
+    //Live Price Variables
     private float price;
     private float open;
     private float min;
     private float max;
 
+    //Live Price Update Variables
+    private boolean shouldStartUpdates;
+    private final StopWatch updateTimer = new StopWatch();
+
+    //Do Once Definitions
+    private final DoOnce doFirstUpdate = new DoOnce();
+    private final DoOnce doLivePriceUpdate = new DoOnce();
+    private final DoOnce doSegmentation = new DoOnce();
+
+    //Default Constructor
     public Stock(String ticker, TimeFrame timeFrame) {
         //Set Stock Definition
         this.ticker = ticker;
@@ -47,9 +62,61 @@ public class Stock {
         //Set the section start time
         this.startTime = new DateTime(0,0,0);
 
-        //Set default values to the current price
+        //Set starting values for price, open, min, max
+        this.price = -1;
+        this.open = -1;
+        this.min = -1;
+        this.max = -1;
+
+        //Doesn't allow updates until set updatable
+        this.shouldStartUpdates = false;
+
+        //Prepare first value set
+        doFirstUpdate.reset();
+        doLivePriceUpdate.reset();
+        doSegmentation.reset();
+    }
+
+
+    /**
+     * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
+     */
+    public void updateData(double liveDelayS) {
+        //Updates the progress bar of each segmentation
+        if (StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime())) updateSegmentationPercentage();
+
+        //Check if the stock should update. If not, don't run the method
+        if (!shouldUpdate()) return;
+
+        //Sets the starting time of the segment
+        if (shouldOpen()) this.startTime = StockUtil.getAdjustedCurrentTime();
+
+        //Set default values to the current price on the first update received
+        this.doFirstUpdate.run(this::initPriceData);
+
+        //Update live price every .5 seconds, Force an update on the first second of every minute
+        updateTimer.start();
+        if (updateTimer.hasTimePassedS(liveDelayS) || StockUtil.getAdjustedCurrentTime().getSecondInt() == 0) {
+            doLivePriceUpdate.run(() -> {
+                updateLivePriceData();
+                updateTimer.restart();
+            });
+        }
+
+        //Have live price updates reset if it is not the first second of every minute
+        if (StockUtil.getAdjustedCurrentTime().getSecondInt() != 0) doLivePriceUpdate.reset();
+
+        //Update stock segment splitting
+        updateSegmentation();
+    }
+
+
+    /**
+     * Initiates the live price data from the stock
+     */
+    private void initPriceData() {
         try {
-            this.price = getLiveJSONData().getJSONObject("regularMarketPrice").getFloat("raw");
+            setLivePrice();
             this.open = price;
             this.min = price;
             this.max = price;
@@ -60,80 +127,29 @@ public class Stock {
         }
     }
 
-
-    private boolean shouldUpdate = false; //Waits until the start of the timeframe to begin
-    private final StopWatch updateTimer = new StopWatch();
-
-    /**
-     * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
-     */
-    public void updateData(double liveDelayS) {
-        //Only allows for data collection during trading day hours
-        DateTime ct = DateTime.getCurrentDateTime();
-        if (ct.isWeekend() || ct.getHourInt() >= 16 || ct.getHourInt() < 9 || (ct.getHourInt() == 9 && ct.getMinuteInt() < 30)) return;
-
-        //Updates the progress bar of each segmentation
-        updateSegmentationPercentage();
-
-        //Wait until the start of the candle timeframe to save
-        if (shouldClose()) {
-            shouldUpdate = true;
-            this.startTime = DateTime.getCurrentDateTime();
-        }
-        if (!shouldUpdate) return;
-
-        //Update live price every .5 seconds, Force an update on the first second of every minute
-        updateTimer.start();
-        if (updateTimer.hasTimePassedS(liveDelayS) || DateTime.getCurrentDateTime().getSecondInt() == 0) {
-            DoOnce.default2.run(() -> {
-                try {
-                    updateLivePriceData();
-                    updateTimer.restart();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (JSONException e) {
-                    System.out.println("Too Many Requests!");
-                }
-            });
-        }
-        if (DateTime.getCurrentDateTime().getSecondInt() != 0) DoOnce.default2.reset();
-
-        updateSegmentation();
-    }
-
-
     /**
      * Retrieves and sets the live price data gathered for the stock. The minimum and maximum are set as well
      * @throws IOException
      */
-    public void updateLivePriceData() throws IOException {
-        JSONObject liveData = getLiveJSONData();
-        this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
-        //this.volume = liveData.getJSONObject("regularMarketVolume").getInt("raw");
-
-        if (getPrice() < getMin()) this.min = getPrice();
-        if (getPrice() > getMax()) this.max = getPrice();
-    }
-
-    /**
-     * Updates the percentage complete for the current stock candle
-     */
-    public void updateSegmentationPercentage() {
-        //TODO: Make segmentation percentage consistent across all time frames
-        double sec = DateTime.getCurrentDateTime().getSecondInt();
-        if (DateTime.getCurrentDateTime().getSecondInt() % getTimeFrame().getSeconds() == 0) sec *= ((double) getTimeFrame().getSeconds() / DateTime.getCurrentDateTime().getSecondInt());
-        double percent = sec / getTimeFrame().getSeconds();
-        percent -= Math.floor(percent);
-        getClosePercent().set(percent);
+    public void updateLivePriceData() {
+        try {
+            setLivePrice();
+            if (getPrice() < getMin()) this.min = getPrice();
+            if (getPrice() > getMax()) this.max = getPrice();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            System.out.println("Too Many Requests!");
+        }
     }
 
     /**
      * Updates the splitting of the stock into candles based on the TimeFrame of the stock selected. This method adds an entry to the historical data HashMap and then resets the livedata to the current price
      */
     public void updateSegmentation() {
-        if (shouldClose()) {
-            DoOnce.default1.run(() -> {
-                DateTime ct = DateTime.getCurrentDateTime();
+        if (shouldOpen()) {
+            doSegmentation.run(() -> {
+                DateTime ct = StockUtil.getAdjustedCurrentTime();
                 //Save Live Data as Historical
                 String[] timeFrameData = {String.valueOf(getOpen()),String.valueOf(getPrice()),String.valueOf(getMin()),String.valueOf(getMax())};
                 DateTime previousOpen = new DateTime(ct.getYearInt(),ct.getMonthInt(),ct.getDayInt(),ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt() - getTimeFrame().getSeconds());
@@ -146,51 +162,23 @@ public class Stock {
                 this.max = getPrice();
             });
         } else {
-            DoOnce.default1.reset();
+            doSegmentation.reset();
         }
     }
 
     /**
-     * This method will return true if the stock is at a place to go through with a split depending on the current TimeFrame
-     * @return
+     * Updates the percentage complete for the current stock candle
      */
-    public boolean shouldClose() {
-        DateTime currentTime = DateTime.getCurrentDateTime();
-        return switch(getTimeFrame()) {
-            case ONE_SECOND -> true;
-            case FIVE_SECONDS -> currentTime.getSecondInt() % 5 == 0;
-            case THIRTY_SECONDS -> currentTime.getSecondInt() % 30 == 0;
-            case ONE_MINUTE -> currentTime.getSecondInt() == 0;
-            case FIVE_MINUTES -> currentTime.getMinuteInt() % 5 == 0 && currentTime.getSecondInt() == 0;
-            case FIFTEEN_MINUTES -> currentTime.getMinuteInt() % 15 == 0 && currentTime.getSecondInt() == 0;
-            case THIRTY_MINUTES -> currentTime.getMinuteInt() % 30 == 0 && currentTime.getSecondInt() == 0;
-            case ONE_HOUR -> currentTime.getHourInt() == 0 && currentTime.getMinuteInt() == 0 && currentTime.getSecondInt() == 0;
-            case TWO_HOUR -> currentTime.getHourInt() % 2 == 0 && currentTime.getMinuteInt() == 0 && currentTime.getSecondInt() == 0;
-            case FOUR_HOUR -> currentTime.getHourInt() % 4 == 0 && currentTime.getMinuteInt() == 0 && currentTime.getSecondInt() == 0;
-            case ONE_DAY -> currentTime.getHourInt() % 8 == 0 && currentTime.getMinuteInt() == 0 && currentTime.getSecondInt() == 0;
-        };
+    public void updateSegmentationPercentage() {
+        //TODO: Fix for all timeframes over 1min
+        DateTime ct = StockUtil.getAdjustedCurrentTime();
+        double sec = ct.getSecondInt();
+        if (ct.getSecondInt() % getTimeFrame().getSeconds() == 0) sec *= ((double) getTimeFrame().getSeconds() / ct.getSecondInt());
+        double percent = sec / getTimeFrame().getSeconds();
+        percent -= Math.floor(percent);
+        getClosePercent().set(percent);
     }
 
-    /**
-     * This method downloads live stock data from Yahoo Finance. This is how we get the live data for the stock and proceed with downloading our numbers. "raw" is the raw data, "fmt" is the formatted data
-     * @return
-     * @throws IOException
-     */
-    private JSONObject getLiveJSONData() throws IOException {
-        //This uses the YahooFinance API to get the live stock price
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        String url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/" + getTicker() + "?modules=price";
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = httpClient.execute(httpGet); //This causes lots of lag
-
-        //TODO: Find a new API. Yahoo Finance will sometimes return: "Too Many Requests" instead. Find a new way
-        String jsonString = EntityUtils.toString(response.getEntity());
-        JSONObject jsonObject = new JSONObject(jsonString).getJSONObject("quoteSummary");
-        String resultJsonString = jsonObject.get("result").toString().replace("[", "").replace("]", "");
-        JSONObject priceObject = new JSONObject(resultJsonString).getJSONObject("price");
-
-        return priceObject;
-    }
 
     /**
      * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
@@ -219,6 +207,66 @@ public class Stock {
         return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
+
+    /**
+     * Sets the live price data from the yahoo finance json data
+     * @throws IOException
+     * @throws JSONException
+     */
+    private void setLivePrice() throws IOException, JSONException {
+        //TODO: Learn to Calculate Volume, then add to CSV
+        JSONObject liveData = StockUtil.getYahooFinanceJsonData(getTicker());
+        this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
+        //this.price = liveData.getJSONObject("postMarketPrice").getFloat("raw");
+        //this.volume = liveData.getJSONObject("regularMarketVolume").getInt("raw");
+    }
+
+    private void setUpdatesStarted(boolean shouldStart) {
+        this.shouldStartUpdates = shouldStart;
+    }
+
+    private boolean shouldStartUpdates() {
+        return shouldStartUpdates;
+    }
+
+    /**
+     * Checks if the stock should update live data. This method has the main purpose of stopping the update method if returned false
+     * @return
+     */
+    public boolean shouldUpdate() {
+        DateTime ct = StockUtil.getAdjustedCurrentTime();
+
+        //Wait until the start of the candle timeframe to allow updates
+        if (shouldOpen()) setUpdatesStarted(true);
+        if (!shouldStartUpdates()) return false;
+
+        //Only allows for data collection during trading day hours
+        if (!StockUtil.isTradingHours(ct)) return false;
+
+        //Finally, if all checks pass, return true
+        return true;
+    }
+
+    /**
+     * This method will return true if the stock is at a place to go through with a split depending on the current TimeFrame
+     * @return
+     */
+    public boolean shouldOpen() {
+        DateTime ct = StockUtil.getAdjustedCurrentTime();
+        return switch(getTimeFrame()) {
+            case ONE_SECOND -> true;
+            case FIVE_SECONDS -> ct.getSecondInt() % 5 == 0;
+            case THIRTY_SECONDS -> ct.getSecondInt() % 30 == 0;
+            case ONE_MINUTE -> ct.getSecondInt() == 0;
+            case FIVE_MINUTES -> ct.getMinuteInt() % 5 == 0 && ct.getSecondInt() == 0;
+            case FIFTEEN_MINUTES -> ct.getMinuteInt() % 15 == 0 && ct.getSecondInt() == 0;
+            case THIRTY_MINUTES -> ct.getMinuteInt() % 30 == 0 && ct.getSecondInt() == 0;
+            case ONE_HOUR -> ct.getHourInt() == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
+            case TWO_HOUR -> ct.getHourInt() % 2 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
+            case FOUR_HOUR -> ct.getHourInt() % 4 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
+            case ONE_DAY -> ct.getHourInt() % 8 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
+        };
+    }
 
     public float getPrice() {
         return price;
@@ -285,6 +333,10 @@ public class Stock {
     }
 
 
+    /**
+     * Retrieves the percentage from the open time to the close time. This is mainly used in the progress bar
+     * @return
+     */
     public Container<Double> getClosePercent() {
         return closePercent;
     }
@@ -303,42 +355,6 @@ public class Stock {
 
     public String getTicker() {
         return ticker;
-    }
-
-
-    public enum TimeFrame {
-        ONE_SECOND("1sec",1),
-        FIVE_SECONDS("5sec",5),
-        THIRTY_SECONDS("30sec",30),
-        ONE_MINUTE("1min",60),
-        FIVE_MINUTES("5min",5 * 60),
-        FIFTEEN_MINUTES("15min", 15 * 60),
-        THIRTY_MINUTES("30min", 30 * 60),
-        ONE_HOUR("1hr", 60 * 60),
-        TWO_HOUR("2hr", 2 * 60 * 60),
-        FOUR_HOUR("4hr", 4 * 60 * 60),
-        ONE_DAY("1day", 8 * 60 * 60);
-
-        private final String tag;
-        private final int seconds;
-
-        TimeFrame(String tag, int seconds) {
-            this.tag = tag;
-            this.seconds = seconds;
-        }
-
-        public String getTag() {
-            return tag;
-        }
-
-        public int getSeconds() {
-            return seconds;
-        }
-
-        @Override
-        public String toString() {
-            return getTag();
-        }
     }
 
 }
