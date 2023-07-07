@@ -1,5 +1,6 @@
 package com.ejo.stockdownloader.util;
 
+import com.ejo.glowlib.misc.Container;
 import com.ejo.glowlib.time.DateTime;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -12,6 +13,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class StockUtil {
+
+    public static final Container<Integer> SECOND_ADJUST = new Container<>(-2);
 
     /**
      * This method downloads live stock data from Yahoo Finance. This is how we get the live data for the stock and proceed with downloading our numbers. "raw" is the raw data, "fmt" is the formatted data
@@ -40,7 +43,7 @@ public class StockUtil {
 
     public static DateTime getAdjustedCurrentTime() {
         DateTime ct = DateTime.getCurrentDateTime();
-        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt()  - 2);
+        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt()  + SECOND_ADJUST.get());
     }
 
 }

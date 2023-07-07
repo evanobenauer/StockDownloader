@@ -145,6 +145,9 @@ public class Stock {
 
     /**
      * Updates the splitting of the stock into candles based on the TimeFrame of the stock selected. This method adds an entry to the historical data HashMap and then resets the livedata to the current price
+     * TODO: The issue with segmentation is of when the next candle opens. For tradingview, the candle opens a tick AFTER the close, causing a difference
+     *  MY data opens and closes at the same time, which is different. Tradingview closes at 59 and opens at 0. My data closes at 0 and opens at 0
+     *
      */
     public void updateSegmentation() {
         if (shouldOpen()) {
@@ -153,7 +156,7 @@ public class Stock {
                 //Save Live Data as Historical
                 String[] timeFrameData = {String.valueOf(getOpen()),String.valueOf(getPrice()),String.valueOf(getMin()),String.valueOf(getMax())};
                 DateTime previousOpen = new DateTime(ct.getYearInt(),ct.getMonthInt(),ct.getDayInt(),ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt() - getTimeFrame().getSeconds());
-                dataHash.put(previousOpen.getDateTimeID(),timeFrameData);
+                if (getPrice() != -1) dataHash.put(previousOpen.getDateTimeID(),timeFrameData);
 
                 //Reset Live Data for next Candle
                 this.startTime = ct;
@@ -172,11 +175,19 @@ public class Stock {
     public void updateSegmentationPercentage() {
         //TODO: Fix for all timeframes over 1min
         DateTime ct = StockUtil.getAdjustedCurrentTime();
+        double totalPercent = 0;
+
+        //Second Percent
         double sec = ct.getSecondInt();
         if (ct.getSecondInt() % getTimeFrame().getSeconds() == 0) sec *= ((double) getTimeFrame().getSeconds() / ct.getSecondInt());
-        double percent = sec / getTimeFrame().getSeconds();
-        percent -= Math.floor(percent);
-        getClosePercent().set(percent);
+        double secPercent = sec / getTimeFrame().getSeconds();
+        secPercent -= Math.floor(secPercent);
+        totalPercent += secPercent;
+
+        //Minute Percent
+        //TODO: Add
+
+        getClosePercent().set(totalPercent);
     }
 
 
