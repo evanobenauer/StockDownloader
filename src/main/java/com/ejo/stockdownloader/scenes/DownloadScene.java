@@ -67,7 +67,7 @@ public class DownloadScene extends Scene {
         double focusY = getWindow().getSize().getY() / 2;
         double focusPrice = stock.getPrice();
         Vector candleScale = new Vector(1, scaleY.get());
-        drawCandles(scene,stock,focusPrice,focusY,candleSpace,candleWidth,candleScale);
+        drawCandles(this,stock,focusPrice,focusY,candleSpace,candleWidth,candleScale);
 
         //Draw Price Line and Tag
         if (stock.shouldUpdate()) {
@@ -99,7 +99,7 @@ public class DownloadScene extends Scene {
         super.tick(scene, mousePos);
 
         //Update Segmentation to prevent spaced transition
-        if (stock.shouldOpen()) stock.updateSegmentation();
+        if (stock.shouldClose()) stock.updateClose();
 
         //Update anchored elements
         scaleSlider.setPos(new Vector(getWindow().getSize().getX() - scaleSlider.getSize().getX() - 10, 20));
@@ -137,7 +137,7 @@ public class DownloadScene extends Scene {
         DateTime ct = StockUtil.getAdjustedCurrentTime();
         int candleAmount = (int) (getWindow().getSize().getX() / 18) + 1;
         for (int i = 1; i < candleAmount; i++) {
-            DateTime candleTime = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), stock.getStartTime().getSecondInt() - stock.getTimeFrame().getSeconds() * i);
+            DateTime candleTime = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), stock.getOpenTime().getSecondInt() - stock.getTimeFrame().getSeconds() * i);
             CandleUI historicalCandle = new CandleUI(stock, candleTime, liveCandle.getPos().getX() - (candleSpace + candleWidth) * i, focusY, focusPrice, candleWidth, candleScale);
             candleList.add(historicalCandle);
         }
@@ -160,7 +160,7 @@ public class DownloadScene extends Scene {
 
     private void drawPriceLine(double value, double y, double boxHeight, ColorE color) {
         QuickDraw.drawRect(new Vector(0, y), new Vector(getWindow().getSize().getX(), .5), color);
-        QuickDraw.drawRect(new Vector(0, y - boxHeight / 2), new Vector(36, boxHeight), new ColorE(125, 125, 125, 200));
+        QuickDraw.drawRect(new Vector(0, y - boxHeight / 2), new Vector(36, boxHeight), color);
         QuickDraw.drawText(String.valueOf(MathE.roundDouble(value, 2)), new Font("Arial", Font.PLAIN, 10), new Vector(2, y - boxHeight / 2), ColorE.WHITE);
     }
 
