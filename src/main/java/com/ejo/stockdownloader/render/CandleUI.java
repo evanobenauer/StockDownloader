@@ -20,8 +20,8 @@ public class CandleUI extends ElementUI {
     private final Vector scale;
 
     //Historical Candle
-    public CandleUI(Scene scene, Stock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
-        super(scene,Vector.NULL,true,true);
+    public CandleUI(Stock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
+        super(Vector.NULL,true,true);
         this.stock = stock;
         this.dateTime = dateTime;
 
@@ -34,24 +34,24 @@ public class CandleUI extends ElementUI {
     }
 
     //Current Candle. Current candles have a dateTime of NULL
-    public CandleUI(Scene scene, Stock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
-        this(scene,stock,null,x,focusY,focusPrice,width,scale);
+    public CandleUI(Stock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
+        this(stock,null,x,focusY,focusPrice,width,scale);
     }
 
     @Override
-    public void draw() {
-        super.draw();
+    public void draw(Scene scene, Vector mousePos) {
+        super.draw(scene, mousePos);
         double wickWidth = getBodySize().getX()/6 * getScale().getX();
 
         //Wicks
         int colorOffset = 100;
         ColorE wickColor = new ColorE(getColor().getRed() - colorOffset, getColor().getGreen() - colorOffset, getColor().getBlue() - colorOffset);
-        QuickDraw.drawRect(null,getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY()), wickColor);
-        QuickDraw.drawRect(null,getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getDateTime()) - getStock().getMin(getDateTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getDateTime()) - getStock().getMin(getDateTime()))*getScale().getY()), wickColor);
 
         //Body
-        QuickDraw.drawRect(null, getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
-        QuickDraw.drawRect(null,getPos(),getBodySize(),getColor());
+        QuickDraw.drawRect(getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
+        QuickDraw.drawRect(getPos(),getBodySize(),getColor());
 
     }
 

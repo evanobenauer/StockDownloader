@@ -1,6 +1,7 @@
 package com.ejo.stockdownloader.util;
 
 public enum TimeFrame {
+
     ONE_SECOND("1sec", 1),
     FIVE_SECONDS("5sec", 5),
     THIRTY_SECONDS("30sec", 30),

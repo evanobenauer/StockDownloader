@@ -23,12 +23,12 @@ public class StockUtil {
      */
     public static JSONObject getYahooFinanceJsonData(String stockTicker) throws IOException, JSONException {
         //This uses the YahooFinance API to get the live stock price
+        //TODO: Find a new API to use for live data. Yahoo Finance will sometimes return: "Too Many Requests" instead.
         CloseableHttpClient httpClient = HttpClients.createDefault();
         String url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/" + stockTicker + "?modules=price";
         HttpGet httpGet = new HttpGet(url);
         HttpResponse response = httpClient.execute(httpGet); //This causes lots of lag
 
-        //TODO: Find a new API to use for live data. Yahoo Finance will sometimes return: "Too Many Requests" instead.
         String jsonString = EntityUtils.toString(response.getEntity());
         JSONObject jsonObject = new JSONObject(jsonString).getJSONObject("quoteSummary");
         String resultJsonString = jsonObject.get("result").toString().replace("[", "").replace("]", "");
@@ -43,7 +43,7 @@ public class StockUtil {
 
     public static DateTime getAdjustedCurrentTime() {
         DateTime ct = DateTime.getCurrentDateTime();
-        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt()  + SECOND_ADJUST.get());
+        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt() + SECOND_ADJUST.get());
     }
 
 }

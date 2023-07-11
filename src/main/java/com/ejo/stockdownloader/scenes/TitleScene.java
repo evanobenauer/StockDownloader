@@ -26,16 +26,16 @@ public class TitleScene extends Scene {
     private final Setting<String> stockTickerContainer = new Setting<>("stockTicker","");
     private final Setting<TimeFrame> timeFrameContainer = new Setting<>("timeFrame",TimeFrame.ONE_MINUTE);
 
-    private final TextUI title = new TextUI(this,"Stock Downloader",new Font("Arial Black",Font.BOLD,50),Vector.NULL,ColorE.WHITE);
+    private final TextUI title = new TextUI("Stock Downloader",new Font("Arial Black",Font.BOLD,50),Vector.NULL,ColorE.WHITE);
 
-    private final ModeCycleUI<TimeFrame> mode = new ModeCycleUI<>(this,Vector.NULL,new Vector(100,20),ColorE.BLUE,timeFrameContainer,
+    private final ModeCycleUI<TimeFrame> mode = new ModeCycleUI<>(Vector.NULL,new Vector(100,20),ColorE.BLUE,timeFrameContainer,
             TimeFrame.ONE_SECOND, TimeFrame.FIVE_SECONDS, TimeFrame.THIRTY_SECONDS,
             TimeFrame.ONE_MINUTE, TimeFrame.FIVE_MINUTES, TimeFrame.THIRTY_MINUTES,
             TimeFrame.ONE_HOUR, TimeFrame.TWO_HOUR, TimeFrame.FOUR_HOUR, TimeFrame.ONE_DAY);
 
-    private final TextFieldUI textFieldUI = new TextFieldUI(this,Vector.NULL,new Vector(100,20),ColorE.WHITE,stockTickerContainer,"Stock");
+    private final TextFieldUI textFieldUI = new TextFieldUI(Vector.NULL,new Vector(100,20),ColorE.WHITE,stockTickerContainer,"Stock",false);
 
-    private final ButtonUI button = new ButtonUI(this,"Download!",Vector.NULL,new Vector(200,60),new ColorE(0,125,200,200),() -> {
+    private final ButtonUI button = new ButtonUI("Download!",Vector.NULL,new Vector(200,60),new ColorE(0,125,200,200),() -> {
         if (!textFieldUI.getContainer().get().equals("")) {
             getWindow().setScene(new DownloadScene(new Stock(stockTickerContainer.get().replace(" ", ""), timeFrameContainer.get())));
             if (SettingManager.getDefaultManager().saveAll()) System.out.println("Saved"); else System.out.println("Could Not Save");
@@ -50,12 +50,12 @@ public class TitleScene extends Scene {
     }
 
     @Override
-    public void draw() {
+    public void draw(Scene scene, Vector mousePos) {
         DoOnce.default6.run(() -> {
             Random random = new Random();
             //Add Bouncing Squares
             for (int i = 0; i < 20; i++) {
-                addElements(new PhysicsDraggableUI(new RectangleUI(this,getWindow().getSize().getMultiplied(.5),new Vector(10,10),new ColorE(random.nextInt(),random.nextInt(),random.nextInt(),255)),1,new Vector(random.nextDouble(-5,5),random.nextDouble(-5,5)),Vector.NULL));
+                addElements(new PhysicsDraggableUI(new RectangleUI(getWindow().getSize().getMultiplied(.5),new Vector(10,10),new ColorE(random.nextInt(),random.nextInt(),random.nextInt(),255)),1,new Vector(random.nextDouble(-5,5),random.nextDouble(-5,5)),Vector.NULL));
             }
 
             //Add Widgets
@@ -63,20 +63,20 @@ public class TitleScene extends Scene {
         });
 
         //Draw Background
-        QuickDraw.drawRect(this,Vector.NULL,getWindow().getSize(),new ColorE(50,50,50,255));
+        QuickDraw.drawRect(Vector.NULL,getWindow().getSize(),new ColorE(50,50,50,255));
 
         //Draw Widget Backgrounds
-        QuickDraw.drawRect(this,textFieldUI.getPos(),textFieldUI.getSize(),new ColorE(100,100,100,255));
-        QuickDraw.drawRect(this,mode.getPos(),mode.getSize(),new ColorE(100,100,100,255));
+        QuickDraw.drawRect(textFieldUI.getPos(),textFieldUI.getSize(),new ColorE(100,100,100,255));
+        QuickDraw.drawRect(mode.getPos(),mode.getSize(),new ColorE(100,100,100,255));
 
-        super.draw();
+        super.draw(scene, mousePos);
     }
 
     double step = 0;
 
     @Override
-    public void tick() {
-        super.tick();
+    public void tick(Scene scene, Vector mousePos) {
+        super.tick(scene, mousePos);
 
         //Bounce Physics Squares
         for (ElementUI element : getElements()) {

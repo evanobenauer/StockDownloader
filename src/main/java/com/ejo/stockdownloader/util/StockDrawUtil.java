@@ -13,18 +13,20 @@ public class StockDrawUtil {
 
     public static void drawCandleTooltip(CandleUI candle, Vector mousePos) {
         Stock stock = candle.getStock();
-        int size = 10;
+        int textSize = 10;
         double x = mousePos.getX() - 60;
-        double y = mousePos.getY() - size * 4 - 5;
+        double y = mousePos.getY() - textSize * 4 - 5;
 
+        //Bound X Left
         if (x < 0) {
             x = 0;
             mousePos = new Vector(60,mousePos.getY());
         }
 
+        //Bound Y Up
         if (y < 0) {
             y = 0;
-            mousePos = new Vector(mousePos.getX(),size * 4 + 5);
+            mousePos = new Vector(mousePos.getX(),textSize * 4 + 5);
         }
 
         double open = MathE.roundDouble(stock.getOpen(candle.getDateTime()), 2);
@@ -32,12 +34,14 @@ public class StockDrawUtil {
         double min = MathE.roundDouble(stock.getMin(candle.getDateTime()), 2);
         double max = MathE.roundDouble(stock.getMax(candle.getDateTime()), 2);
 
-        QuickDraw.drawRect(candle.getScene(), new Vector(x - 2, y), new Vector(mousePos.getX() - x + 2, mousePos.getY() - y - 1), new ColorE(0, 125, 200, 200));
+        //Draw Background
+        QuickDraw.drawRect(new Vector(x - 2, y), new Vector(mousePos.getX() - x + 2, mousePos.getY() - y - 1), new ColorE(0, 125, 200, 200));
 
-        QuickDraw.drawText(candle.getScene(), "Open:" + open, new Font("Arial", Font.PLAIN, size), new Vector(x, y), ColorE.WHITE);
-        QuickDraw.drawText(candle.getScene(), "Close:" + close, new Font("Arial", Font.PLAIN, size), new Vector(x, y + size), ColorE.WHITE);
-        QuickDraw.drawText(candle.getScene(), "Min:" + min, new Font("Arial", Font.PLAIN, size), new Vector(x, y + size * 2), ColorE.WHITE);
-        QuickDraw.drawText(candle.getScene(), "Max:" + max, new Font("Arial", Font.PLAIN, size), new Vector(x, y + size * 3), ColorE.WHITE);
+        //Draw Data
+        QuickDraw.drawText("Open:" + open, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y), ColorE.WHITE);
+        QuickDraw.drawText("Close:" + close, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize), ColorE.WHITE);
+        QuickDraw.drawText("Min:" + min, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize * 2), ColorE.WHITE);
+        QuickDraw.drawText("Max:" + max, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize * 3), ColorE.WHITE);
 
     }
 }
