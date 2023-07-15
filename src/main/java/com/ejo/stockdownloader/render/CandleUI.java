@@ -39,8 +39,7 @@ public class CandleUI extends ElementUI {
     }
 
     @Override
-    public void draw(Scene scene, Vector mousePos) {
-        super.draw(scene, mousePos);
+    public void drawElement(Scene scene, Vector mousePos) {
         double wickWidth = getBodySize().getX()/6 * getScale().getX();
 
         //Wicks
@@ -53,6 +52,18 @@ public class CandleUI extends ElementUI {
         QuickDraw.drawRect(getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
         QuickDraw.drawRect(getPos(),getBodySize(),getColor());
 
+    }
+
+    @Override
+    protected void tickElement(Scene scene, Vector mousePos) {
+    }
+
+    @Override
+    public void onKeyPress(Scene scene, int key, int scancode, int action, int mods) {
+    }
+
+    @Override
+    public void onMouseClick(Scene scene, int button, int action, int mods, Vector mousePos) {
     }
 
     @Override
