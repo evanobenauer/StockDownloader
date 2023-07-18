@@ -145,14 +145,14 @@ public class LiveDownloadScene extends Scene {
         //Draw All Candles
         for (CandleUI candle : candleList) {
             if (candle.getStock().getOpen(candle.getDateTime()) != -1) {
-                candle.quickDraw();
+                candle.draw();
             }
         }
 
         //Draw Tooltip
         for (CandleUI candle : candleList) {
             if (candle.getStock().getOpen(candle.getDateTime()) != -1) {
-                candle.quickTick(scene); //Update Mouse Over
+                candle.tick(scene); //Update Mouse Over
                 if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
             }
         }
