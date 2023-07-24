@@ -13,6 +13,7 @@ import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.SliderUI;
 import com.ejo.glowui.util.QuickDraw;
+import com.ejo.stockdownloader.Main;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.util.StockDrawUtil;
 import com.ejo.stockdownloader.util.StockUtil;
@@ -21,7 +22,6 @@ import com.ejo.stockdownloader.render.CandleUI;
 import java.awt.*;
 import java.util.ArrayList;
 
-//TODO: Add optional candle rendering mode. One mode is the current one, one mode is the current candle ONLY?
 public class LiveDownloadScene extends Scene {
 
     private final Stock stock;
@@ -55,8 +55,10 @@ public class LiveDownloadScene extends Scene {
 
     @Override
     public void draw() {
+        getWindow().setEconomic(true);
+
         //Draw Background
-        QuickDraw.drawRect( Vector.NULL, getSize(), new ColorE(50, 50, 50, 255));
+        drawBackground(new ColorE(50, 50, 50, 255));
 
         //Draw Waiting Text
         if (!stock.shouldUpdate()) QuickDraw.drawTextCentered("Waiting for next candle!", new Font("Arial",Font.PLAIN,20),Vector.NULL,getSize(),ColorE.WHITE);

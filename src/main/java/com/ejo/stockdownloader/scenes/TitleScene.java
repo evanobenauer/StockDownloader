@@ -17,9 +17,11 @@ import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
 import com.ejo.glowui.scene.elements.widget.ToggleUI;
 import com.ejo.glowui.util.QuickDraw;
+import com.ejo.stockdownloader.Main;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
+import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.Random;
@@ -106,7 +108,7 @@ public class TitleScene extends Scene {
         updateWidgetPositions();
 
         //Draw Background
-        QuickDraw.drawRect(Vector.NULL,getSize(),new ColorE(50,50,50,255));
+        drawBackground(new ColorE(50,50,50,255));
 
         //Draw Widget Backgrounds
         QuickDraw.drawRect(stockTickerField.getPos(), stockTickerField.getSize(),new ColorE(100,100,100,255));
@@ -125,12 +127,13 @@ public class TitleScene extends Scene {
         //Bounce Physics Squares
         for (ElementUI element : getElements()) {
             if (element instanceof PhysicsObjectUI phys) {
-                doBounce(phys);
+                doPhysicsBounce(phys);
             }
         }
     }
 
     private void initScene() {
+        getWindow().setEconomic(false);
         doInit.run(() -> {
             Random random = new Random();
             //Add Bouncing Squares
@@ -193,7 +196,7 @@ public class TitleScene extends Scene {
         }
     }
 
-    private void doBounce(PhysicsObjectUI phys) {
+    private void doPhysicsBounce(PhysicsObjectUI phys) {
         int size = 10;
         if (phys.getPos().getX() < 0) {
             phys.setPos(new Vector(0,phys.getPos().getY()));

@@ -23,9 +23,10 @@ public class StockUtil {
      */
     public static JSONObject getYahooFinanceJsonData(String stockTicker) throws IOException, JSONException {
         //This uses the YahooFinance API to get the live stock price
-        //TODO: Find a new API to use for live data. Yahoo Finance will sometimes return: "Too Many Requests" instead.
+        //Yahoo Finance will sometimes return: "Too Many Requests".
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        String url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/" + stockTicker + "?modules=price";
+        String version = "v6";
+        String url = "https://query1.finance.yahoo.com/" + version + "/finance/quoteSummary/" + stockTicker + "?modules=price";
         HttpGet httpGet = new HttpGet(url);
         HttpResponse response = httpClient.execute(httpGet); //This causes lots of lag
 

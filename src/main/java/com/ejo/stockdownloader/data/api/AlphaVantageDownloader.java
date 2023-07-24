@@ -54,7 +54,13 @@ public class AlphaVantageDownloader {
         }
     }
 
+    //TODO: Have this download all months, then combine all to 1 CSV
     public boolean downloadAll() {
+        return false;
+    }
+
+    //TODO: Have this download the last month, then combine to the All CSV
+    public boolean updateAll() {
         return false;
     }
 
