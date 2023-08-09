@@ -21,6 +21,7 @@ public class StockUtil {
      * @return
      * @throws IOException
      */
+    @SuppressWarnings("All")
     public static JSONObject getYahooFinanceJsonData(String stockTicker) throws IOException, JSONException {
         //This uses the YahooFinance API to get the live stock price
         //Yahoo Finance will sometimes return: "Too Many Requests".

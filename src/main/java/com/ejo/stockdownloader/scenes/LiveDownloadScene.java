@@ -13,8 +13,8 @@ import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.SliderUI;
 import com.ejo.glowui.util.DrawUtil;
-import com.ejo.glowui.util.GLManager;
 import com.ejo.glowui.util.QuickDraw;
+import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.util.StockDrawUtil;
 import com.ejo.stockdownloader.util.StockUtil;
@@ -34,7 +34,7 @@ public class LiveDownloadScene extends Scene {
     private final SliderUI<Integer> secAdjust;
 
     private final SliderUI<Double> scaleSlider;
-    private final Container<Double> scaleY = new Container<>(200d);
+    private final Container<Double> scaleY;
 
     private final ButtonUI saveButton;
     private final ButtonUI exitButton;
@@ -45,6 +45,9 @@ public class LiveDownloadScene extends Scene {
     public LiveDownloadScene(Stock stock) {
         super("Candle Scene");
         this.stock = stock;
+        this.scaleY = new Container<>(200d);
+
+        App.getWindow().setEconomic(true);
 
         addElements(
                 saveButton = new ButtonUI("Force Save", Vector.NULL, new Vector(100, 40), new ColorE(0, 125, 200, 200), ButtonUI.MouseButton.LEFT,stock::saveHistoricalData),
@@ -100,7 +103,6 @@ public class LiveDownloadScene extends Scene {
 
     @Override
     public void tick() {
-        getWindow().setEconomic(true);
         super.tick();
 
         //Update Segmentation to prevent spaced transition
@@ -150,10 +152,18 @@ public class LiveDownloadScene extends Scene {
             candleList.add(historicalCandle);
         }
 
-        //Draw All Candles & Tooltips
+        //Draw Candles
         for (CandleUI candle : candleList) {
-            if (candle.getStock().getOpen(candle.getDateTime()) != -1) {
+            if (candle.getStock().getOpen(candle.getOpenTime()) != -1) {
                 candle.draw();
+                candle.tick(scene); //Update Mouse Over
+                if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
+            }
+        }
+
+        //Draw Tooltips
+        for (CandleUI candle : candleList) {
+            if (candle.getStock().getOpen(candle.getOpenTime()) != -1) {
                 candle.tick(scene); //Update Mouse Over
                 if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
             }

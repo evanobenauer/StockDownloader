@@ -228,7 +228,13 @@ public class Stock {
             HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV("stock_data", getTicker() + "_" + getTimeFrame().getTag());
 
             HashMap<Long, String[]> convertedMap = new HashMap<>();
-            for (String key : rawMap.keySet()) convertedMap.put(Long.parseLong(key), rawMap.get(key));
+            for (String key : rawMap.keySet()) {
+                if (isExtendedHours()) {
+                    convertedMap.put(Long.parseLong(key), rawMap.get(key));
+                } else if (StockUtil.isTradingHours(new DateTime(Long.parseLong(key)))) {
+                    convertedMap.put(Long.parseLong(key), rawMap.get(key));
+                }
+            }
             return this.dataHash = convertedMap;
         } catch (Exception e) {
             e.printStackTrace();
@@ -262,7 +268,8 @@ public class Stock {
             return StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime());
         }
 
-        //Finally, if all checks pass, return true
+        //Finally, if all checks pass,
+        //return true;
     }
 
     @SuppressWarnings("All")
@@ -310,6 +317,7 @@ public class Stock {
             if (dateTime == null) {
                 return getOpen();
             } else {
+                if (dateTime.equals(getOpenTime())) return getOpen();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[0]);
             }
         } catch (NullPointerException e) {
@@ -322,6 +330,7 @@ public class Stock {
             if (dateTime == null) {
                 return getPrice();
             } else {
+                if (dateTime.equals(getOpenTime())) return getPrice();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[1]);
             }
         } catch (NullPointerException e) {
@@ -338,6 +347,7 @@ public class Stock {
             if (dateTime == null) {
                 return getMin();
             } else {
+                if (dateTime.equals(getOpenTime())) return getMin();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[2]);
             }
         } catch (NullPointerException e) {
@@ -354,6 +364,7 @@ public class Stock {
             if (dateTime == null) {
                 return getMax();
             } else {
+                if (dateTime.equals(getOpenTime())) return getMax();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[3]);
             }
         } catch (NullPointerException e) {

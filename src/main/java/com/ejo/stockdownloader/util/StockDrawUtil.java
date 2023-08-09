@@ -29,10 +29,11 @@ public class StockDrawUtil {
             mousePos = new Vector(mousePos.getX(),textSize * 4 + 5);
         }
 
-        double open = MathE.roundDouble(stock.getOpen(candle.getDateTime()), 2);
-        double close = MathE.roundDouble(stock.getClose(candle.getDateTime()), 2);
-        double min = MathE.roundDouble(stock.getMin(candle.getDateTime()), 2);
-        double max = MathE.roundDouble(stock.getMax(candle.getDateTime()), 2);
+        //Round Data
+        double open = MathE.roundDouble(stock.getOpen(candle.getOpenTime()), 2);
+        double close = MathE.roundDouble(stock.getClose(candle.getOpenTime()), 2);
+        double min = MathE.roundDouble(stock.getMin(candle.getOpenTime()), 2);
+        double max = MathE.roundDouble(stock.getMax(candle.getOpenTime()), 2);
 
         //Draw Background
         QuickDraw.drawRect(new Vector(x - 2, y), new Vector(mousePos.getX() - x + 2, mousePos.getY() - y - 1), new ColorE(0, 125, 200, 200));

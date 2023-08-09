@@ -1,6 +1,7 @@
 package com.ejo.stockdownloader.data.api;
 
 import com.ejo.glowlib.file.FileManager;
+import com.ejo.glowlib.setting.Container;
 import com.ejo.stockdownloader.util.TimeFrame;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -26,6 +27,8 @@ public class AlphaVantageDownloader {
     private final TimeFrame timeFrame;
     private final boolean extendedHours;
 
+    private final Container<Double> downloadPercent = new Container<>(0d);
+
     public AlphaVantageDownloader(String apiKey, String ticker, TimeFrame timeFrame, boolean extendedHours) {
         this.apiKey = apiKey;
         this.ticker = ticker;
@@ -33,25 +36,30 @@ public class AlphaVantageDownloader {
         this.extendedHours = extendedHours;
     }
 
-    public boolean download(String year, String month) {
-        try {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
-            HttpResponse response = httpClient.execute(httpGet);
+    public void download(String year, String month) {
+        //TODO: Update Download Percent
+        //TODO: Add Download Complete Text to Title
+        Thread thread = new Thread(() -> {
+            try {
+                CloseableHttpClient httpClient = HttpClients.createDefault();
+                HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
+                HttpResponse response = httpClient.execute(httpGet);
 
-            String filePath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/";
-            FileManager.createFolderPath(filePath);
+                String filePath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/";
+                FileManager.createFolderPath(filePath);
 
-            String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
+                String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
 
-            FileOutputStream fos = new FileOutputStream(filePath + fileName);
-            response.getEntity().writeTo(fos);
-            fos.close();
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+                FileOutputStream fos = new FileOutputStream(filePath + fileName);
+                response.getEntity().writeTo(fos);
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        thread.setName("AlphaVantage Download Thread");
+        thread.setDaemon(false);
+        thread.start();
     }
 
     //TODO: Have this download all months, then combine all to 1 CSV

@@ -45,8 +45,8 @@ public class CandleUI extends ElementUI {
         //Wicks
         int colorOffset = 100;
         ColorE wickColor = new ColorE(getColor().getRed() - colorOffset, getColor().getGreen() - colorOffset, getColor().getBlue() - colorOffset);
-        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY()), wickColor);
-        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getDateTime()) - getStock().getMin(getDateTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getOpenTime()) - getStock().getMin(getOpenTime()))*getScale().getY()), wickColor);
 
         //Body
         QuickDraw.drawRect(getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
@@ -59,14 +59,6 @@ public class CandleUI extends ElementUI {
     }
 
     @Override
-    public void onKeyPress(Scene scene, int key, int scancode, int action, int mods) {
-    }
-
-    @Override
-    public void onMouseClick(Scene scene, int button, int action, int mods, Vector mousePos) {
-    }
-
-    @Override
     public boolean updateMouseOver(Vector mousePos) {
         boolean mouseOverX = mousePos.getX() >= getPos().getX() && mousePos.getX() <= getPos().getX() + getBodySize().getX();
         boolean mouseOverYDown = mousePos.getY() >= getPos().getY() && mousePos.getY() <= getPos().getY() + getBodySize().getY();
@@ -76,11 +68,11 @@ public class CandleUI extends ElementUI {
 
 
     public boolean isGreen() {
-        return getStock().getClose(getDateTime()) > getStock().getOpen(getDateTime());
+        return getStock().getClose(getOpenTime()) > getStock().getOpen(getOpenTime());
     }
 
     public boolean isRed() {
-        return getStock().getClose(getDateTime()) < getStock().getOpen(getDateTime());
+        return getStock().getClose(getOpenTime()) < getStock().getOpen(getOpenTime());
     }
 
     public ColorE getColor() {
@@ -91,11 +83,11 @@ public class CandleUI extends ElementUI {
 
     @Override
     public Vector getPos() {
-        return new Vector(this.x, getFocusY() -(getStock().getOpen(getDateTime()) * getScale().getY()) + getFocusPrice()*getScale().getY());
+        return new Vector(this.x, getFocusY() -(getStock().getOpen(getOpenTime()) * getScale().getY()) + getFocusPrice()*getScale().getY());
     }
 
     public Vector getBodySize() {
-        double candleHeight = -(getStock().getClose(getDateTime()) - getStock().getOpen(getDateTime()))*getScale().getY();
+        double candleHeight = -(getStock().getClose(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY();
         return new Vector(getWidth()*getScale().getX(),candleHeight);
     }
 
@@ -116,7 +108,7 @@ public class CandleUI extends ElementUI {
     }
 
 
-    public DateTime getDateTime() {
+    public DateTime getOpenTime() {
         return dateTime;
     }
 

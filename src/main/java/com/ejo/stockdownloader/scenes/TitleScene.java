@@ -17,6 +17,7 @@ import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
 import com.ejo.glowui.scene.elements.widget.ToggleUI;
 import com.ejo.glowui.util.QuickDraw;
+import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
@@ -71,11 +72,7 @@ public class TitleScene extends Scene {
     );
 
     private final ButtonUI downloadButton = new ButtonUI("Download!",Vector.NULL,new Vector(200,60),new ColorE(0,125,200,200), ButtonUI.MouseButton.LEFT,() -> {
-        if (SettingManager.getDefaultManager().saveAll()) {
-            System.out.println("Saved");
-        } else {
-            System.out.println("Could Not Save");
-        }
+        System.out.println(SettingManager.getDefaultManager().saveAll() ? "Saved" : "Could Not Save");
 
         if (stockTickerField.getContainer().get().equals("")) return;
 
@@ -85,7 +82,8 @@ public class TitleScene extends Scene {
             if (apiContainer.get().equals("AlphaVantage")) {
                 AlphaVantageDownloader downloader = new AlphaVantageDownloader(apiKeyContainer.getKey(), stockTickerContainer.get(), timeFrameContainer.get(), extendedHoursContainerAPI.get());
                 if (timeContainer.get().equals("Month")) {
-                    downloader.download(yearContainer.get(), monthContainer.get());
+                    if (yearContainer.get().length() == 4 && monthContainer.get().length() == 2)
+                        downloader.download(yearContainer.get(), monthContainer.get());
                 } else {
                     downloader.downloadAll();
                 }
@@ -126,7 +124,6 @@ public class TitleScene extends Scene {
 
     @Override
     public void tick() {
-        getWindow().setEconomic(false);
         super.tick();
 
         //Bounce Physics Squares
@@ -137,6 +134,9 @@ public class TitleScene extends Scene {
 
     private void initScene() {
         doInit.run(() -> {
+            //Set Window Not-Economic
+            App.getWindow().setEconomic(false);
+
             Random random = new Random();
             //Add Bouncing Squares
             for (int i = 0; i < 20; i++) {
