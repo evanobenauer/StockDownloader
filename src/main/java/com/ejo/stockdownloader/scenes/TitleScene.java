@@ -17,11 +17,9 @@ import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
 import com.ejo.glowui.scene.elements.widget.ToggleUI;
 import com.ejo.glowui.util.QuickDraw;
-import com.ejo.stockdownloader.Main;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
-import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.Random;
@@ -36,26 +34,43 @@ public class TitleScene extends Scene {
     //Api Settings
     private final Setting<String> apiContainer = new Setting<>("api","AlphaVantage");
 
+    //Live Data Settings
+    private final Setting<Boolean> extendedHoursContainerLive = new Setting<>("extendedHoursLive",false);
+
     //Alpha Vantage Settings
     private final Setting<String> apiKeyContainer = new Setting<>("apiKey","H0JHAOU61I4MESDZ");
-    private final Setting<Boolean> extendedHoursContainer = new Setting<>("extendedHours",false);
+    private final Setting<Boolean> extendedHoursContainerAPI = new Setting<>("extendedHoursAPI",false);
     private final Setting<String> timeContainer = new Setting<>("monthMode","All");
     private final Setting<String> yearContainer = new Setting<>("year","2000");
     private final Setting<String> monthContainer = new Setting<>("month","01");
 
 
-    //Elements
+    //Sidebar Elements
+    private final ModeCycleUI<String> downloadMode = new ModeCycleUI<>(new Vector(15,25),new Vector(110,20),ColorE.BLUE, downloadModeContainer,"Live Data", "API");
+
+    private final ToggleUI extendedHoursToggleLive = new ToggleUI("Extended Hours",new Vector(15,100),new Vector(110,20),new ColorE(0,200,255,255), extendedHoursContainerLive);
+
+    private final ModeCycleUI<String> apiSelectorMode = new ModeCycleUI<>(new Vector(15,105),new Vector(110,20),ColorE.BLUE, apiContainer,"AlphaVantage");
+    private final TextFieldUI apiKeyField = new TextFieldUI(new Vector(15,165),new Vector(110,20),ColorE.WHITE,apiKeyContainer,"API Key",false);
+    private final ToggleUI extendedHoursToggleAPI = new ToggleUI("Extended Hours",new Vector(15,190),new Vector(110,20),new ColorE(0,200,255,255), extendedHoursContainerAPI);
+    private final ModeCycleUI<String> dateMode = new ModeCycleUI<>("Time",new Vector(15,215),new Vector(110,20),ColorE.BLUE, timeContainer,"Month","All");
+    private final TextFieldUI yearField = new TextFieldUI(new Vector(88,240),new Vector(37,20),ColorE.WHITE,yearContainer,"",true,4);
+    private final TextFieldUI monthField = new TextFieldUI(new Vector(56,240),new Vector(22,20),ColorE.WHITE,monthContainer,"",true,2);
+
+    private final SideBarUI settingsSideBar = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200), downloadMode, extendedHoursToggleLive,apiSelectorMode, apiKeyField, extendedHoursToggleAPI, dateMode,yearField,monthField);
+
+
+    //Center Elements
     private final TextUI title = new TextUI("Stock Downloader",new Font("Arial Black",Font.BOLD,50),Vector.NULL,ColorE.WHITE);
 
+    private final TextFieldUI stockTickerField = new TextFieldUI(Vector.NULL,new Vector(100,20),ColorE.WHITE,stockTickerContainer,"Stock",false);
     private final ModeCycleUI<TimeFrame> timeFrameMode = new ModeCycleUI<>(Vector.NULL,new Vector(100,20),ColorE.BLUE,timeFrameContainer,
             TimeFrame.ONE_SECOND, TimeFrame.FIVE_SECONDS, TimeFrame.THIRTY_SECONDS,
             TimeFrame.ONE_MINUTE, TimeFrame.FIVE_MINUTES, TimeFrame.THIRTY_MINUTES,
             TimeFrame.ONE_HOUR, TimeFrame.TWO_HOUR, TimeFrame.FOUR_HOUR, TimeFrame.ONE_DAY
     );
 
-    private final TextFieldUI stockTickerField = new TextFieldUI(Vector.NULL,new Vector(100,20),ColorE.WHITE,stockTickerContainer,"Stock",false);
-
-    private final ButtonUI downloadButton = new ButtonUI("Download!",Vector.NULL,new Vector(200,60),new ColorE(0,125,200,200),() -> {
+    private final ButtonUI downloadButton = new ButtonUI("Download!",Vector.NULL,new Vector(200,60),new ColorE(0,125,200,200), ButtonUI.MouseButton.LEFT,() -> {
         if (SettingManager.getDefaultManager().saveAll()) {
             System.out.println("Saved");
         } else {
@@ -65,10 +80,10 @@ public class TitleScene extends Scene {
         if (stockTickerField.getContainer().get().equals("")) return;
 
         if (downloadModeContainer.get().equals("Live Data")) {
-            getWindow().setScene(new LiveDownloadScene(new Stock(stockTickerContainer.get().replace(" ", ""), timeFrameContainer.get())));
+            getWindow().setScene(new LiveDownloadScene(new Stock(stockTickerContainer.get().replace(" ", ""), timeFrameContainer.get(),true)));
         } else if (downloadModeContainer.get().equals("API")) {
             if (apiContainer.get().equals("AlphaVantage")) {
-                AlphaVantageDownloader downloader = new AlphaVantageDownloader(apiKeyContainer.getKey(), stockTickerContainer.get(), timeFrameContainer.get(), extendedHoursContainer.get());
+                AlphaVantageDownloader downloader = new AlphaVantageDownloader(apiKeyContainer.getKey(), stockTickerContainer.get(), timeFrameContainer.get(), extendedHoursContainerAPI.get());
                 if (timeContainer.get().equals("Month")) {
                     downloader.download(yearContainer.get(), monthContainer.get());
                 } else {
@@ -79,22 +94,11 @@ public class TitleScene extends Scene {
         }
     });
 
-    
-    //Sidebar Elements
-    private final ModeCycleUI<String> downloadMode = new ModeCycleUI<>(new Vector(15,25),new Vector(110,20),ColorE.BLUE, downloadModeContainer,"Live Data", "API");
-    private final ModeCycleUI<String> apiSelectorMode = new ModeCycleUI<>(new Vector(15,105),new Vector(110,20),ColorE.BLUE, apiContainer,"AlphaVantage");
-    private final TextFieldUI apiKeyField = new TextFieldUI(new Vector(15,165),new Vector(110,20),ColorE.WHITE,apiKeyContainer,"API Key",false);
-    private final ToggleUI extendedHoursToggle = new ToggleUI("Extended Hours",new Vector(15,190),new Vector(110,20),new ColorE(0,200,255,255),extendedHoursContainer);
-    private final ModeCycleUI<String> dateMode = new ModeCycleUI<>("Time",new Vector(15,215),new Vector(110,20),ColorE.BLUE, timeContainer,"Month","All");
-    private final TextFieldUI yearField = new TextFieldUI(new Vector(88,240),new Vector(37,20),ColorE.WHITE,yearContainer,"",true);
-    private final TextFieldUI monthField = new TextFieldUI(new Vector(56,240),new Vector(22,20),ColorE.WHITE,monthContainer,"",true);
-
-    private final SideBarUI settingsSideBar = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200), downloadMode, apiSelectorMode, apiKeyField,extendedHoursToggle, dateMode,yearField,monthField);
-
 
     //DoOnce Instantiation
     private final DoOnce doInit = new DoOnce();
 
+    
     public TitleScene() {
         super("Title");
         doInit.reset();
@@ -122,18 +126,16 @@ public class TitleScene extends Scene {
 
     @Override
     public void tick() {
+        getWindow().setEconomic(false);
         super.tick();
 
         //Bounce Physics Squares
         for (ElementUI element : getElements()) {
-            if (element instanceof PhysicsObjectUI phys) {
-                doPhysicsBounce(phys);
-            }
+            if (element instanceof PhysicsObjectUI phys) doPhysicsBounce(phys);
         }
     }
 
     private void initScene() {
-        getWindow().setEconomic(false);
         doInit.run(() -> {
             Random random = new Random();
             //Add Bouncing Squares
@@ -166,16 +168,19 @@ public class TitleScene extends Scene {
         downloadMode.setPos(new Vector(downloadMode.getPos().getX(),55));
 
         if (downloadModeContainer.get().equals("Live Data")) {
+            extendedHoursToggleLive.disable(false);
             apiSelectorMode.disable(true);
             apiKeyField.disable(true);
-            extendedHoursToggle.disable(true);
+            extendedHoursToggleAPI.disable(true);
             dateMode.disable(true);
             monthField.disable(true);
             yearField.disable(true);
         } else if (downloadModeContainer.get().equals("API")) {
+
+            extendedHoursToggleLive.disable(true);
             apiSelectorMode.disable(false);
             apiKeyField.disable(!apiContainer.get().equals("AlphaVantage"));
-            extendedHoursToggle.disable(!apiContainer.get().equals("AlphaVantage"));
+            extendedHoursToggleAPI.disable(!apiContainer.get().equals("AlphaVantage"));
             dateMode.disable(!apiContainer.get().equals("AlphaVantage"));
 
             monthField.disable(!timeContainer.get().equals("Month"));

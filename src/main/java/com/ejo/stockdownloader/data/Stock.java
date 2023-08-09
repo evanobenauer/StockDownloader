@@ -1,8 +1,8 @@
 package com.ejo.stockdownloader.data;
 
 import com.ejo.glowlib.file.CSVManager;
-import com.ejo.glowlib.misc.Container;
 import com.ejo.glowlib.misc.DoOnce;
+import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
 import com.ejo.stockdownloader.util.StockUtil;
@@ -22,6 +22,7 @@ public class Stock {
     //Stock Information
     private final String ticker;
     private final TimeFrame timeFrame;
+    private final boolean extendedHours;
 
     //Historical Data HashMap
     private HashMap<Long,String[]> dataHash;
@@ -49,9 +50,10 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame) {
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
+        this.extendedHours = extendedHours;
 
         this.dataHash = loadHistoricalData();
 
@@ -72,7 +74,8 @@ public class Stock {
      */
     public void updateData(double liveDelayS) {
         //Updates the progress bar of each segmentation
-        if (StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime())) updateClosePercent();
+        if (isExtendedHours() ? StockUtil.isPriceActive(StockUtil.getAdjustedCurrentTime()) : StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime()))
+            updateClosePercent();
 
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
@@ -89,11 +92,11 @@ public class Stock {
             });
         }
 
-        //Have live price updates reset if it is not the first second of every minute
+        //Have live price updates reset if it is not the first second of every minute. This is so the stock will FORCE an update on the start of each minute. Shown above
         if (StockUtil.getAdjustedCurrentTime().getSecondInt() != 0) doLivePriceUpdate.reset();
 
         //Updates and Open and Close of each segment
-        updateOpen(); //POSSIBLY move this inside of the updateTimer after the updateLivePriceData to have more different open and close times
+        updateOpen();
         updateClose();
     }
 
@@ -151,7 +154,7 @@ public class Stock {
         }
         this.doClose.run(() -> {
             DateTime ct = StockUtil.getAdjustedCurrentTime();
-            //Save Live Data as Historical {Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)}
+            //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
             DateTime previousOpen = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
             if (getPrice() != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
@@ -171,15 +174,18 @@ public class Stock {
         double totalPercent = 0;
 
         //Second Percent
-        double sec = ct.getSecondInt();
-        if (ct.getSecondInt() % getTimeFrame().getSeconds() == 0) sec *= ((double) getTimeFrame().getSeconds() / ct.getSecondInt());
-        double secPercent = sec / getTimeFrame().getSeconds();
-        secPercent -= Math.floor(secPercent);
+        double secPercent = (double) ct.getSecondInt() / getTimeFrame().getSeconds();
         totalPercent += secPercent;
 
         //Minute Percent
-        //TODO: Fix for all timeframes over 1min; Add Minute Percent
+        double minPercent = ct.getMinuteInt() / ((double) getTimeFrame().getSeconds() / 60);
+        totalPercent += minPercent;
 
+        //Hour Percent
+        double hrPercent = ct.getHourInt() / ((double) getTimeFrame().getSeconds() / 60 / 60);
+        totalPercent += hrPercent;
+
+        totalPercent -= Math.floor(totalPercent);
         getClosePercent().set(totalPercent);
     }
 
@@ -204,8 +210,10 @@ public class Stock {
     @SuppressWarnings("All")
     private void setLivePrice() throws IOException, JSONException {
         JSONObject liveData = StockUtil.getYahooFinanceJsonData(getTicker());
-        this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
-        //this.price = liveData.getJSONObject("postMarketPrice").getFloat("raw");
+        DateTime t = StockUtil.getAdjustedCurrentTime();
+        if (StockUtil.isTradingHours(t)) this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
+        if (StockUtil.isPostMarket(t))this.price = liveData.getJSONObject("postMarketPrice").getFloat("raw");
+        if (StockUtil.isPreMarket(t))this.price = liveData.getJSONObject("preMarketPrice").getFloat("raw");
         //this.volume = liveData.getJSONObject("regularMarketVolume").getInt("raw");
     }
 
@@ -220,9 +228,7 @@ public class Stock {
             HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV("stock_data", getTicker() + "_" + getTimeFrame().getTag());
 
             HashMap<Long, String[]> convertedMap = new HashMap<>();
-            for (String key : rawMap.keySet()) {
-                convertedMap.put(Long.parseLong(key), rawMap.get(key));
-            }
+            for (String key : rawMap.keySet()) convertedMap.put(Long.parseLong(key), rawMap.get(key));
             return this.dataHash = convertedMap;
         } catch (Exception e) {
             e.printStackTrace();
@@ -249,11 +255,14 @@ public class Stock {
         if (shouldClose()) setUpdatesStarted(true);
         if (!shouldStartUpdates()) return false;
 
-        //Only allows for data collection during trading day hours
-        if (!StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime())) return false;
+        //Only allows for data collection during trading hours
+        if (isExtendedHours()) {
+            return StockUtil.isPriceActive(StockUtil.getAdjustedCurrentTime());
+        } else {
+            return StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime());
+        }
 
         //Finally, if all checks pass, return true
-        return true;
     }
 
     @SuppressWarnings("All")
@@ -367,6 +376,10 @@ public class Stock {
 
     public HashMap<Long, String[]> getHistoricalData() {
         return dataHash;
+    }
+
+    public boolean isExtendedHours() {
+        return extendedHours;
     }
 
     public TimeFrame getTimeFrame() {

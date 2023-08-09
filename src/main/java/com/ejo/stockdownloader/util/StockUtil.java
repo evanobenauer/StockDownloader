@@ -1,6 +1,6 @@
 package com.ejo.stockdownloader.util;
 
-import com.ejo.glowlib.misc.Container;
+import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class StockUtil {
 
-    public static final Container<Integer> SECOND_ADJUST = new Container<>(-2);
+    public static final Container<Integer> SECOND_ADJUST = new Container<>(0);
 
     /**
      * This method downloads live stock data from Yahoo Finance. This is how we get the live data for the stock and proceed with downloading our numbers. "raw" is the raw data, "fmt" is the formatted data
@@ -40,6 +40,18 @@ public class StockUtil {
 
     public static boolean isTradingHours(DateTime currentTime) {
         return !currentTime.isWeekend() && currentTime.getHourInt() < 16 && currentTime.getHourInt() >= 9 && (currentTime.getHourInt() != 9 || currentTime.getMinuteInt() >= 30);
+    }
+
+    public static boolean isPreMarket(DateTime currentTime) {
+        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHourInt() >= 4 && currentTime.getHourInt() < 10;
+    }
+
+    public static boolean isPostMarket(DateTime currentTime) {
+        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHourInt() >= 16 && currentTime.getHourInt() < 20;
+    }
+
+    public static boolean isPriceActive(DateTime currentTime) {
+        return isTradingHours(currentTime) || isPreMarket(currentTime) || isPostMarket(currentTime);
     }
 
     public static DateTime getAdjustedCurrentTime() {
