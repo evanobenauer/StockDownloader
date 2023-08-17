@@ -209,7 +209,7 @@ public class Stock {
      */
     @SuppressWarnings("All")
     private void setLivePrice() throws IOException, JSONException {
-        JSONObject liveData = StockUtil.getYahooFinanceJsonData(getTicker());
+        JSONObject liveData = StockUtil.getYahooFinanceJsonData(getTicker(),6);
         DateTime t = StockUtil.getAdjustedCurrentTime();
         if (StockUtil.isTradingHours(t)) this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
         if (StockUtil.isPostMarket(t))this.price = liveData.getJSONObject("postMarketPrice").getFloat("raw");
