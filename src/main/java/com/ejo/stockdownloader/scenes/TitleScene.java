@@ -97,10 +97,8 @@ public class TitleScene extends Scene {
             if (api.get().equals("AlphaVantage")) runAlphaVantageDownload();
 
             //SET WARNING TEXT IF A DOWNLOAD IS ACTIVE, BUT BUTTON IS CLICKED AGAIN
-            if (apiDownloader.isDownloadActive().get()) {
-                warningText.setColor(ColorE.RED);
-                warningText.setText("Download Already In Progress!");
-            }
+            if (apiDownloader.isDownloadActive().get())
+                warningText.setText("Download Already In Progress!").setColor(ColorE.RED);
 
         }
     });
@@ -126,6 +124,7 @@ public class TitleScene extends Scene {
                 addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5),new Vector(10,10),new ColorE(random.nextInt(),random.nextInt(),random.nextInt(),255)),1,new Vector(random.nextDouble(-5,5),random.nextDouble(-5,5)),Vector.NULL));
             }
 
+            //Set Progress Bar Off By Default
             progressBarApiDownload.setRendered(false);
 
             //Add Widgets
@@ -145,14 +144,12 @@ public class TitleScene extends Scene {
         QuickDraw.drawRect(timeFrameMode.getPos(), timeFrameMode.getSize(),new ColorE(100,100,100,255));
         if (progressBarApiDownload.shouldRender()) QuickDraw.drawRect(progressBarApiDownload.getPos(), progressBarApiDownload.getSize(),new ColorE(100,100,100,255));
 
+        //Set Warning Text
         if (apiDownloader != null && !apiDownloader.isDownloadActive().get() && apiDownloader.isDownloadFinished().get()) {
-            if (apiDownloader.isDownloadSuccessful().get()) {
-                warningText.setColor(ColorE.GREEN);
-                warningText.setText("Download Finished Successfully!");
-            } else {
-                warningText.setColor(ColorE.RED);
-                warningText.setText("Download Failed!");
-            }
+            if (apiDownloader.isDownloadSuccessful().get())
+                warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
+            else
+                warningText.setText("Download Failed!").setColor(ColorE.RED);
         }
 
         updateWidgetPositions();
@@ -192,37 +189,39 @@ public class TitleScene extends Scene {
         modeDownloadMode.setPos(new Vector(modeDownloadMode.getPos().getX(),55));
 
         if (downloadMode.get().equals("Live Data")) {
-            toggleLiveExtendedHours.disable(false);
-            modeApi.disable(true);
-            fieldApiKey.disable(true);
-            toggleApiExtendedHours.disable(true);
-            modeApiTime.disable(true);
-            fieldApiMonth.disable(true);
-            fieldApiYear.disable(true);
+            toggleLiveExtendedHours.setEnabled(true);
+
+            modeApi.setEnabled(false);
+            fieldApiKey.setEnabled(false);
+            toggleApiExtendedHours.setEnabled(false);
+            modeApiTime.setEnabled(false);
+            fieldApiMonth.setEnabled(false);
+            fieldApiYear.setEnabled(false);
         } else if (downloadMode.get().equals("API")) {
+            toggleLiveExtendedHours.setEnabled(false);
 
-            toggleLiveExtendedHours.disable(true);
-            modeApi.disable(false);
-            fieldApiKey.disable(!api.get().equals("AlphaVantage"));
-            toggleApiExtendedHours.disable(!api.get().equals("AlphaVantage"));
-            modeApiTime.disable(!api.get().equals("AlphaVantage"));
+            modeApi.setEnabled(true);
 
-            fieldApiMonth.disable(!apiTime.get().equals("Month"));
-            fieldApiYear.disable(!apiTime.get().equals("Month"));
+            fieldApiKey.setEnabled(api.get().equals("AlphaVantage"));
+            toggleApiExtendedHours.setEnabled(api.get().equals("AlphaVantage"));
+            modeApiTime.setEnabled(api.get().equals("AlphaVantage"));
+
+            fieldApiMonth.setEnabled(apiTime.get().equals("Month") && api.get().equals("AlphaVantage"));
+            fieldApiYear.setEnabled(apiTime.get().equals("Month") && api.get().equals("AlphaVantage"));
 
             if (api.get().equals("AlphaVantage")) {
-                QuickDraw.drawTextCentered("Alpha Vantage Settings:",new Font("Arial",Font.PLAIN,12), sideBarSettings.getBarPos().getAdded(0,150), new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
-            }
+                QuickDraw.drawTextCentered("Alpha Vantage Settings:", new Font("Arial", Font.PLAIN, 12), sideBarSettings.getBarPos().getAdded(0, 150), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
 
-            if (apiTime.get().equals("Month")) {
-                QuickDraw.drawText("Month:",new Font("Arial",Font.PLAIN,13), sideBarSettings.getBarPos().getAdded(15, fieldApiMonth.getPos().getY() + 2),ColorE.WHITE);
-                QuickDraw.drawText("/",new Font("Arial",Font.PLAIN,16), sideBarSettings.getBarPos().getAdded(fieldApiMonth.getPos()).getAdded(new Vector(fieldApiMonth.getSize().getX() + 3,0)),ColorE.WHITE);
+                if (apiTime.get().equals("Month")) {
+                    QuickDraw.drawText("Month:", new Font("Arial", Font.PLAIN, 13), sideBarSettings.getBarPos().getAdded(15, fieldApiMonth.getPos().getY() + 2), ColorE.WHITE);
+                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getBarPos().getAdded(fieldApiMonth.getPos()).getAdded(new Vector(fieldApiMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
+                }
             }
 
             QuickDraw.drawTextCentered("API:",new Font("Arial",Font.PLAIN,16), sideBarSettings.getBarPos().getAdded(0,95),new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
         } else {
             for (ElementUI element : sideBarSettings.getElementList()) {
-                element.disable(true);
+                element.setEnabled(false);
             }
         }
     }
@@ -237,18 +236,21 @@ public class TitleScene extends Scene {
             //Set Progress Bar Container
             progressBarApiDownload.setContainer(apiDownloader.getDownloadProgress());
 
+            //Download data based on month mode
             if (apiTime.get().equals("Month")) {
                 if (apiYear.get().length() == 4 && apiMonth.get().length() == 2) {
                     downloader.download(apiYear.get(), apiMonth.get());
                 } else {
-                    warningText.setColor(ColorE.RED);
-                    warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY");
+                    warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
                 }
             } else if (apiTime.get().equals("All")) {
                 downloader.downloadAll();
             } else {
                 System.out.println("Lol, Maybe ill add an update mode to only download the last month?");
             }
+
+            //TODO: If too many requests, add an error here
+
         }
     }
 

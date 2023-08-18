@@ -33,14 +33,16 @@ public class AlphaVantageDownloader extends APIDownloader {
                 initDownloadContainers();
                 CloseableHttpClient httpClient = HttpClients.createDefault();
                 HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
+                setDownloadProgress(.25);
                 HttpResponse response = httpClient.execute(httpGet);
-
+                setDownloadProgress(.5);
                 String filePath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/";
                 FileManager.createFolderPath(filePath);
 
                 String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
 
                 FileOutputStream fos = new FileOutputStream(filePath + fileName);
+                setDownloadProgress(.75);
                 response.getEntity().writeTo(fos);
                 fos.close();
                 endDownloadContainers(true);

@@ -30,12 +30,17 @@ public abstract class APIDownloader {
         getDownloadProgress().set(0d);
     }
 
+    protected void setDownloadProgress(double progress) {
+        getDownloadProgress().set(progress);
+    }
+
     protected void endDownloadContainers(boolean success) {
         getDownloadProgress().set(1d);
         isDownloadActive().set(false);
         isDownloadFinished().set(true);
         isDownloadSuccessful().set(success);
     }
+
 
     public Container<Boolean> isDownloadActive() {
         return downloadActive;
