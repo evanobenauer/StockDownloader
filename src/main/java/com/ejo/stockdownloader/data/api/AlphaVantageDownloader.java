@@ -1,13 +1,11 @@
 package com.ejo.stockdownloader.data.api;
 
 import com.ejo.glowlib.file.FileManager;
-import com.ejo.glowlib.setting.Container;
 import com.ejo.stockdownloader.util.TimeFrame;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +13,7 @@ import java.io.IOException;
 //Realtime intraday data from AlphaVantage is premium only
 //KEY: "H0JHAOU61I4MESDZ"
 //https://www.alphavantage.co/documentation/
-public class AlphaVantageDownloader {
+public class AlphaVantageDownloader extends APIDownloader {
 
     private final String FUNCTION = "TIME_SERIES_INTRADAY";
     private final boolean ADJUSTED = false;
@@ -23,24 +21,16 @@ public class AlphaVantageDownloader {
     private final String DATA_TYPE = "csv";
 
     private final String apiKey;
-    private final String ticker;
-    private final TimeFrame timeFrame;
-    private final boolean extendedHours;
-
-    private final Container<Double> downloadPercent = new Container<>(0d);
 
     public AlphaVantageDownloader(String apiKey, String ticker, TimeFrame timeFrame, boolean extendedHours) {
+        super(ticker,timeFrame,extendedHours);
         this.apiKey = apiKey;
-        this.ticker = ticker;
-        this.timeFrame = timeFrame;
-        this.extendedHours = extendedHours;
     }
 
     public void download(String year, String month) {
-        //TODO: Update Download Percent
-        //TODO: Add Download Complete Text to Title
         Thread thread = new Thread(() -> {
             try {
+                initDownloadContainers();
                 CloseableHttpClient httpClient = HttpClients.createDefault();
                 HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
                 HttpResponse response = httpClient.execute(httpGet);
@@ -53,7 +43,9 @@ public class AlphaVantageDownloader {
                 FileOutputStream fos = new FileOutputStream(filePath + fileName);
                 response.getEntity().writeTo(fos);
                 fos.close();
+                endDownloadContainers(true);
             } catch (IOException e) {
+                endDownloadContainers(false);
                 e.printStackTrace();
             }
         });
@@ -80,18 +72,6 @@ public class AlphaVantageDownloader {
 
     public String getApiKey() {
         return apiKey;
-    }
-
-    public String getTicker() {
-        return ticker;
-    }
-
-    public TimeFrame getTimeFrame() {
-        return timeFrame;
-    }
-
-    public boolean isExtendedHours() {
-        return extendedHours;
     }
 
 }
