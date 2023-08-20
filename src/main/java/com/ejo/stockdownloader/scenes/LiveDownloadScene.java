@@ -105,9 +105,6 @@ public class LiveDownloadScene extends Scene {
     public void tick() {
         super.tick();
 
-        //Update Segmentation to prevent spaced transition
-        if (stock.shouldClose()) stock.updateClose();
-
         //Update anchored elements
         exitButton.setPos(new Vector(0, 0));
         saveButton.setPos(new Vector(getSize().getX() - saveButton.getSize().getX() - 4, 5));
@@ -127,10 +124,14 @@ public class LiveDownloadScene extends Scene {
         }
 
         //Forces the program to run at 2fps even in economic mode
-        forceFrameWatch.start();
-        if (forceFrameWatch.hasTimePassedS(.5)) {
-            DrawUtil.forceRenderFrame();
-            forceFrameWatch.restart();
+        if (StockUtil.isPriceActive(stock.isExtendedHours(),StockUtil.getAdjustedCurrentTime())) {
+            forceFrameWatch.start();
+            if (forceFrameWatch.hasTimePassedS(.5)) {
+                DrawUtil.forceRenderFrame();
+                forceFrameWatch.restart();
+            }
+        } else {
+            forceFrameWatch.stop();
         }
     }
 

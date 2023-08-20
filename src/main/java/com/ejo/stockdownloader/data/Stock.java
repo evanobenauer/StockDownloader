@@ -71,11 +71,11 @@ public class Stock {
 
     /**
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
+     * **METHOD PROCESS: Waits... [Time to close: Updates the close, updates the price, updates the open], Waits...**
      */
     public void updateData(double liveDelayS) {
         //Updates the progress bar of each segmentation
-        if (isExtendedHours() ? StockUtil.isPriceActive(StockUtil.getAdjustedCurrentTime()) : StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime()))
-            updateClosePercent();
+        if (StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime())) updateClosePercent();
 
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
@@ -83,21 +83,15 @@ public class Stock {
         //Set default values to the current price on the first update received
         this.doFirstUpdate.run(this::initLivePriceData);
 
-        //Update live price every provided delay second or update the live price on the start of every minute
-        updateTimer.start();
-        if (updateTimer.hasTimePassedS(liveDelayS) || StockUtil.getAdjustedCurrentTime().getSecondInt() == 0) {
-            doLivePriceUpdate.run(() -> {
-                updateLivePriceData();
-                updateTimer.restart();
-            });
-        }
-
-        //Have live price updates reset if it is not the first second of every minute. This is so the stock will FORCE an update on the start of each minute. Shown above
-        if (StockUtil.getAdjustedCurrentTime().getSecondInt() != 0) doLivePriceUpdate.reset();
-
-        //Updates and Open and Close of each segment
-        updateOpen();
+        //Update the Close of each segment
         updateClose();
+
+        //Update live price every provided delay second or update the live price on the start of every open
+        updateLivePriceDataDelay(liveDelayS);
+
+        //Update the Open of each segment
+        //[If a force update every open is unwanted, remove the force update and add this inside the updateTimer after the updateLivePriceData()]
+        updateOpen();
     }
 
 
@@ -130,6 +124,25 @@ public class Stock {
         } catch (JSONException e) {
             System.out.println("Too Many Requests!");
         }
+    }
+
+
+    /**
+     * Updates the live price data every timeframe specified in the liveDelay in seconds. The method will also force an update at the beginning of every open to make sure the stock
+     * is up to date
+     * @param liveDelayS
+     */
+    public void updateLivePriceDataDelay(double liveDelayS) {
+        updateTimer.start();
+        if (updateTimer.hasTimePassedS(liveDelayS) || shouldClose()) {
+            doLivePriceUpdate.run(() -> {
+                updateLivePriceData();
+                updateTimer.restart();
+            });
+        }
+
+        //Have live price updates reset if the stock should not close to continue with the liveDelay. This is so the stock will FORCE an update each open. Shown above
+        if (!shouldClose()) doLivePriceUpdate.reset();
     }
 
 
@@ -262,11 +275,7 @@ public class Stock {
         if (!shouldStartUpdates()) return false;
 
         //Only allows for data collection during trading hours
-        if (isExtendedHours()) {
-            return StockUtil.isPriceActive(StockUtil.getAdjustedCurrentTime());
-        } else {
-            return StockUtil.isTradingHours(StockUtil.getAdjustedCurrentTime());
-        }
+        return StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime());
 
         //Finally, if all checks pass,
         //return true;
