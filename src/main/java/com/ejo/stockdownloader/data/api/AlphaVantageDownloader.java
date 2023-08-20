@@ -59,10 +59,13 @@ public class AlphaVantageDownloader extends APIDownloader {
         boolean isAll = startYear == 2000 && startMonth == 1 && endYear == StockUtil.getAdjustedCurrentTime().getYearInt() && endMonth == StockUtil.getAdjustedCurrentTime().getMonthInt();
         String suffix = isAll ? "ALL" : getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(endMonth) + "-" + endYear;
 
+        String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
+        String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+        String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + suffix;
+
         Thread thread = new Thread(() -> {
             try {
                 initDownloadContainers();
-                String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
                 while (true) {
                     downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
 
@@ -86,8 +89,6 @@ public class AlphaVantageDownloader extends APIDownloader {
                     }
                 }
 
-                String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
-                String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + suffix;
                 CSVManager.combineFiles(tempPath,mainPath,fileName);
                 CSVManager.clearDuplicates(mainPath,fileName);
                 FileManager.deleteFile(tempPath,"");
@@ -99,7 +100,7 @@ public class AlphaVantageDownloader extends APIDownloader {
             }
         });
         thread.setName("AlphaVantage Download Thread");
-        thread.setDaemon(false);
+        thread.setDaemon(true);
         thread.start();
     }
 
