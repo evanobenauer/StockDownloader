@@ -1,6 +1,9 @@
 package com.ejo.stockdownloader.data.api;
 
+import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.file.FileManager;
+import com.ejo.glowlib.setting.Container;
+import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -31,20 +34,7 @@ public class AlphaVantageDownloader extends APIDownloader {
         Thread thread = new Thread(() -> {
             try {
                 initDownloadContainers();
-                CloseableHttpClient httpClient = HttpClients.createDefault();
-                HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
-                setDownloadProgress(.25);
-                HttpResponse response = httpClient.execute(httpGet);
-                setDownloadProgress(.5);
-                String filePath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/";
-                FileManager.createFolderPath(filePath);
-
-                String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
-
-                FileOutputStream fos = new FileOutputStream(filePath + fileName);
-                setDownloadProgress(.75);
-                response.getEntity().writeTo(fos);
-                fos.close();
+                downloadFile(year,month,"stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/",getDownloadProgress());
                 endDownloadContainers(true);
             } catch (IOException e) {
                 endDownloadContainers(false);
@@ -56,14 +46,104 @@ public class AlphaVantageDownloader extends APIDownloader {
         thread.start();
     }
 
-    //TODO: Have this download all months, then combine all to 1 CSV
-    public boolean downloadAll() {
-        return false;
+    public void downloadGroup(int startYear, int startMonth, int endYear, int endMonth) {
+        Container<Integer> year = new Container<>(startYear);
+        Container<Integer> month = new Container<>(startMonth);
+
+        int yearDiff = endYear - year.get();
+        int monthDiff = endMonth - month.get();
+
+        Container<Integer> minuteCount = new Container<>(0);
+        int maxRequestsPerMinute = 5;
+
+        boolean isAll = startYear == 2000 && startMonth == 1 && endYear == StockUtil.getAdjustedCurrentTime().getYearInt() && endMonth == StockUtil.getAdjustedCurrentTime().getMonthInt();
+        String suffix = isAll ? "ALL" : getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(endMonth) + "-" + endYear;
+
+        Thread thread = new Thread(() -> {
+            try {
+                initDownloadContainers();
+                String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
+                while (true) {
+                    downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
+
+                    double yearPercent = (double) (year.get() - 2000) / (yearDiff + 1);
+                    double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / yearDiff;
+                    setDownloadProgress(yearPercent + monthPercent);
+
+                    if (year.get() == endYear && month.get() == endMonth) break;
+
+                    if (month.get() != 12) {
+                        month.set(month.get() + 1);
+                    } else {
+                        month.set(1);
+                        year.set(year.get() + 1);
+                    }
+
+                    minuteCount.set(minuteCount.get() + 1);
+                    if (minuteCount.get() == maxRequestsPerMinute) {
+                        Thread.sleep(61 * 1000);
+                        minuteCount.set(0);
+                    }
+                }
+
+                String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+                String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + suffix;
+                CSVManager.combineFiles(tempPath,mainPath,fileName);
+                CSVManager.clearDuplicates(mainPath,fileName);
+                FileManager.deleteFile(tempPath,"");
+
+                endDownloadContainers(true);
+            } catch (Exception e) {
+                endDownloadContainers(false);
+                e.printStackTrace();
+            }
+        });
+        thread.setName("AlphaVantage Download Thread");
+        thread.setDaemon(false);
+        thread.start();
+    }
+
+    public void downloadAll() {
+        downloadGroup(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
     }
 
     //TODO: Have this download the last month, then combine to the All CSV
-    public boolean updateAll() {
-        return false;
+    public void updateAll() {
+
+    }
+
+    private void downloadFile(String year, String month, String filePath, Container<Double> downloadProgress) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
+        downloadProgress.set(.25);
+        HttpResponse response = httpClient.execute(httpGet);
+        downloadProgress.set(.5);
+        FileManager.createFolderPath(filePath);
+
+        String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
+
+        FileOutputStream fos = new FileOutputStream(filePath + fileName);
+        downloadProgress.set(.75);
+        response.getEntity().writeTo(fos);
+        fos.close();
+    }
+
+    private String getMonthString(int month) {
+        return switch (month) {
+            case 1 -> "01";
+            case 2 -> "02";
+            case 3 -> "03";
+            case 4 -> "04";
+            case 5 -> "05";
+            case 6 -> "06";
+            case 7 -> "07";
+            case 8 -> "08";
+            case 9 -> "09";
+            case 10 -> "10";
+            case 11 -> "11";
+            case 12 -> "12";
+            default -> throw new IllegalStateException("Unexpected value: " + month);
+        };
     }
 
 
