@@ -50,8 +50,9 @@ public class StockUtil {
         return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHourInt() >= 16 && currentTime.getHourInt() < 20;
     }
 
-    public static boolean isPriceActive(DateTime currentTime) {
-        return isTradingHours(currentTime) || isPreMarket(currentTime) || isPostMarket(currentTime);
+    public static boolean isPriceActive(boolean extendedHours, DateTime currentTime) {
+        if (extendedHours) return isTradingHours(currentTime) || isPreMarket(currentTime) || isPostMarket(currentTime);
+        return isTradingHours(currentTime);
     }
 
     public static DateTime getAdjustedCurrentTime() {
