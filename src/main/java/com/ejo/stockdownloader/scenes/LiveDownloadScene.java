@@ -65,25 +65,24 @@ public class LiveDownloadScene extends Scene {
         //Draw Background
         drawBackground(new ColorE(50, 50, 50, 255));
 
-        //Draw All Candles
-        double candleWidth = 14;
-        double candleSpace = 4;
-        double focusY = getSize().getY() / 2;
-        double focusPrice = stock.getPrice();
-        Vector candleScale = new Vector(1, scaleY.get());
-        drawCandles(this,stock,focusPrice,focusY,candleSpace,candleWidth,candleScale);
-
-        //Draw Price Line and Tag
         if (stock.shouldUpdate()) {
-            double boxHeight = 15;
+            //Draw All Candles
+            double candleWidth = 14;
+            double candleSpace = 4;
+            double focusY = getSize().getY() / 2;
+            double focusPrice = stock.getPrice();
+            Vector candleScale = new Vector(1, scaleY.get());
+            drawCandles(this,stock,focusPrice,focusY,candleSpace,candleWidth,candleScale);
+
+            double linePriceBoxHeight = 15;
 
             //Draw Live Price Line
             CandleUI liveCandleColor = new CandleUI(stock, 0, 0,0, 0, Vector.NULL);
-            drawPriceLine(stock.getPrice(),getSize().getY() / 2,boxHeight,new ColorE(liveCandleColor.getColor().getRed(), liveCandleColor.getColor().getGreen(), liveCandleColor.getColor().getBlue(), 200));
+            drawPriceLine(stock.getPrice(),getSize().getY() / 2,linePriceBoxHeight,new ColorE(liveCandleColor.getColor().getRed(), liveCandleColor.getColor().getGreen(), liveCandleColor.getColor().getBlue(), 200));
 
             //Draw Hover Price Line and Tag
             double yPrice = (focusY - getWindow().getScaledMousePos().getY()) / candleScale.getY() + focusPrice;
-            drawPriceLine(yPrice,getWindow().getScaledMousePos().getY(),boxHeight,ColorE.GRAY);
+            drawPriceLine(yPrice,getWindow().getScaledMousePos().getY(),linePriceBoxHeight,ColorE.GRAY);
         }
 
         //Draw Waiting Text
