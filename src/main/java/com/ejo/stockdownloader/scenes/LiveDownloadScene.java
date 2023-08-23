@@ -83,10 +83,10 @@ public class LiveDownloadScene extends Scene {
             //Draw Hover Price Line and Tag
             double yPrice = (focusY - getWindow().getScaledMousePos().getY()) / candleScale.getY() + focusPrice;
             drawPriceLine(yPrice,getWindow().getScaledMousePos().getY(),linePriceBoxHeight,ColorE.GRAY);
+        } else {
+            //Draw Waiting Text
+            QuickDraw.drawTextCentered("Waiting for next candle!", new Font("Arial",Font.PLAIN,20),Vector.NULL,getSize(),ColorE.WHITE);
         }
-
-        //Draw Waiting Text
-        if (!stock.shouldUpdate()) QuickDraw.drawTextCentered("Waiting for next candle!", new Font("Arial",Font.PLAIN,20),Vector.NULL,getSize(),ColorE.WHITE);
 
         //Draw Stock Ticker
         QuickDraw.drawText("Downloading: " + stock.getTicker() + "-" + stock.getTimeFrame().getTag(), new Font("Arial", Font.PLAIN, 10), new Vector(16, 1), ColorE.WHITE);

@@ -69,7 +69,12 @@ public class AlphaVantageDownloader extends APIDownloader {
                 while (true) {
                     downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
 
-                    double yearPercent = (double) (year.get() - 2000) / (yearDiff + 1);
+                    /*
+                    if (file is over the max limit) break;
+                    add download failed warning text!
+                     */
+
+                    double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
                     double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / yearDiff;
                     setDownloadProgress(yearPercent + monthPercent);
 
