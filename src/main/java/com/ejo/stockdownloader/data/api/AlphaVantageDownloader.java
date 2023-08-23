@@ -75,7 +75,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                      */
 
                     double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
-                    double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / yearDiff;
+                    double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / (yearDiff + 1);
                     setDownloadProgress(yearPercent + monthPercent);
 
                     if (year.get() == endYear && month.get() == endMonth) break;
