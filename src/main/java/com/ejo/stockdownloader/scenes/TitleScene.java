@@ -24,7 +24,6 @@ import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
-import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
 
 import java.awt.*;
@@ -46,26 +45,29 @@ public class TitleScene extends Scene {
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive",false);
 
     //Alpha Vantage Settings
-    private final Setting<String> apiKey = new Setting<>("apiKey","H0JHAOU61I4MESDZ");
-    private final Setting<Boolean> apiExtendedHours = new Setting<>("extendedHoursAPI",false);
-    private final Setting<String> apiTime = new Setting<>("monthMode","All");
-    private final Setting<String> apiYear = new Setting<>("year","2000");
-    private final Setting<String> apiMonth = new Setting<>("month","01");
+    private final Setting<String> alphaVantageKey = new Setting<>("apiKey","H0JHAOU61I4MESDZ");
+    private final Setting<Boolean> alphaVantagePremium = new Setting<>("premium",false);
+    private final Setting<Boolean> alphaVantageExtendedHours = new Setting<>("extendedHoursAPI",false);
+    private final Setting<String> alphaVantageTime = new Setting<>("monthMode","All");
+    private final Setting<String> alphaVantageYear = new Setting<>("year","2000");
+    private final Setting<String> alphaVantageMonth = new Setting<>("month","01");
 
 
     //Sidebar Elements
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15,25),new Vector(110,20),ColorE.BLUE, downloadMode,"Live Data", "API");
 
-    private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours",new Vector(15,100),new Vector(110,20),new ColorE(0,200,255,255), liveExtendedHours);
+    private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours",new Vector(15,105),new Vector(110,20),new ColorE(0,200,255,255), liveExtendedHours);
 
     private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15,105),new Vector(110,20),ColorE.BLUE, api,"AlphaVantage");
-    private final TextFieldUI fieldApiKey = new TextFieldUI(new Vector(15,165),new Vector(110,20),ColorE.WHITE, apiKey,"API Key",false);
-    private final ToggleUI toggleApiExtendedHours = new ToggleUI("Extended Hours",new Vector(15,190),new Vector(110,20),new ColorE(0,200,255,255), apiExtendedHours);
-    private final ModeCycleUI<String> modeApiTime = new ModeCycleUI<>("Time",new Vector(15,215),new Vector(110,20),ColorE.BLUE, apiTime,"Month","All");
-    private final TextFieldUI fieldApiYear = new TextFieldUI(new Vector(88,240),new Vector(37,20),ColorE.WHITE, apiYear,"",true,4);
-    private final TextFieldUI fieldApiMonth = new TextFieldUI(new Vector(56,240),new Vector(22,20),ColorE.WHITE, apiMonth,"",true,2);
+    private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15,165),new Vector(110,20),ColorE.WHITE, alphaVantageKey,"API Key",false);
+    private final ToggleUI toggleAlphaVantagePremium = new ToggleUI("Is Key Premium",new Vector(15,190),new Vector(110,20),new ColorE(0,200,255,255), alphaVantagePremium);
+    private final ToggleUI toggleAlphaVantageExtendedHours = new ToggleUI("Extended Hours",new Vector(15,190 + 25),new Vector(110,20),new ColorE(0,200,255,255), alphaVantageExtendedHours);
+    private final ModeCycleUI<String> modeAlphaVantageTime = new ModeCycleUI<>("Time",new Vector(15,215 + 25),new Vector(110,20),ColorE.BLUE, alphaVantageTime,"Month","All", "Range");
+    private final TextFieldUI fieldAlphaVantageYear = new TextFieldUI(new Vector(88,240 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYear,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonth = new TextFieldUI(new Vector(56,240 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonth,"",true,2);
 
-    private final SideBarUI sideBarSettings = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200), modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldApiKey, toggleApiExtendedHours, modeApiTime, fieldApiYear, fieldApiMonth);
+    private final SideBarUI sideBarSettings = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200),
+            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth);
 
 
     //Center Elements
@@ -193,29 +195,31 @@ public class TitleScene extends Scene {
             toggleLiveExtendedHours.setEnabled(true);
 
             modeApi.setEnabled(false);
-            fieldApiKey.setEnabled(false);
-            toggleApiExtendedHours.setEnabled(false);
-            modeApiTime.setEnabled(false);
-            fieldApiMonth.setEnabled(false);
-            fieldApiYear.setEnabled(false);
+            fieldAlphaVantageKey.setEnabled(false);
+            toggleAlphaVantagePremium.setEnabled(false);
+            toggleAlphaVantageExtendedHours.setEnabled(false);
+            modeAlphaVantageTime.setEnabled(false);
+            fieldAlphaVantageMonth.setEnabled(false);
+            fieldAlphaVantageYear.setEnabled(false);
         } else if (downloadMode.get().equals("API")) {
             toggleLiveExtendedHours.setEnabled(false);
 
             modeApi.setEnabled(true);
 
-            fieldApiKey.setEnabled(api.get().equals("AlphaVantage"));
-            toggleApiExtendedHours.setEnabled(api.get().equals("AlphaVantage"));
-            modeApiTime.setEnabled(api.get().equals("AlphaVantage"));
+            fieldAlphaVantageKey.setEnabled(api.get().equals("AlphaVantage"));
+            toggleAlphaVantagePremium.setEnabled(api.get().equals("AlphaVantage"));
+            toggleAlphaVantageExtendedHours.setEnabled(api.get().equals("AlphaVantage"));
+            modeAlphaVantageTime.setEnabled(api.get().equals("AlphaVantage"));
 
-            fieldApiMonth.setEnabled(apiTime.get().equals("Month") && api.get().equals("AlphaVantage"));
-            fieldApiYear.setEnabled(apiTime.get().equals("Month") && api.get().equals("AlphaVantage"));
+            fieldAlphaVantageMonth.setEnabled(alphaVantageTime.get().equals("Month") && api.get().equals("AlphaVantage"));
+            fieldAlphaVantageYear.setEnabled(alphaVantageTime.get().equals("Month") && api.get().equals("AlphaVantage"));
 
             if (api.get().equals("AlphaVantage")) {
                 QuickDraw.drawTextCentered("Alpha Vantage Settings:", new Font("Arial", Font.PLAIN, 12), sideBarSettings.getBarPos().getAdded(0, 150), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
 
-                if (apiTime.get().equals("Month")) {
-                    QuickDraw.drawText("Month:", new Font("Arial", Font.PLAIN, 13), sideBarSettings.getBarPos().getAdded(15, fieldApiMonth.getPos().getY() + 2), ColorE.WHITE);
-                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getBarPos().getAdded(fieldApiMonth.getPos()).getAdded(new Vector(fieldApiMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
+                if (alphaVantageTime.get().equals("Month")) {
+                    QuickDraw.drawText("Month:", new Font("Arial", Font.PLAIN, 14), sideBarSettings.getBarPos().getAdded(15, fieldAlphaVantageMonth.getPos().getY() + 3), ColorE.WHITE);
+                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getBarPos().getAdded(fieldAlphaVantageMonth.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
                 }
             }
 
@@ -231,20 +235,20 @@ public class TitleScene extends Scene {
         if (apiDownloader == null || !apiDownloader.isDownloadActive().get()) { //Run only if the api downloader has NOT been set OR if the downloader is NOT active
 
             //Set apiDownloader as the AlphaVantage downloader
-            apiDownloader = new AlphaVantageDownloader(apiKey.getKey(), stockTicker.get(), timeFrame.get(), apiExtendedHours.get());
+            apiDownloader = new AlphaVantageDownloader(alphaVantageKey.getKey(), alphaVantagePremium.get(), stockTicker.get(), timeFrame.get(), alphaVantageExtendedHours.get());
             AlphaVantageDownloader downloader = (AlphaVantageDownloader) apiDownloader;
 
             //Set Progress Bar Container
             progressBarApiDownload.setContainer(apiDownloader.getDownloadProgress());
 
             //Download data based on month mode
-            if (apiTime.get().equals("Month")) {
-                if (apiYear.get().length() == 4 && apiMonth.get().length() == 2) {
-                    downloader.download(apiYear.get(), apiMonth.get());
+            if (alphaVantageTime.get().equals("Month")) {
+                if (alphaVantageYear.get().length() == 4 && alphaVantageMonth.get().length() == 2) {
+                    downloader.download(alphaVantageYear.get(), alphaVantageMonth.get());
                 } else {
                     warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
                 }
-            } else if (apiTime.get().equals("All")) {
+            } else if (alphaVantageTime.get().equals("All")) {
                 downloader.downloadAll();
             } else {
                 System.out.println("Lol, Maybe ill add an update mode to only download the last month?");

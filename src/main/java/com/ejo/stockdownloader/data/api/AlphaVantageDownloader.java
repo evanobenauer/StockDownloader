@@ -18,16 +18,18 @@ import java.io.IOException;
 //https://www.alphavantage.co/documentation/
 public class AlphaVantageDownloader extends APIDownloader {
 
-    private final String FUNCTION = "TIME_SERIES_INTRADAY";
-    private final boolean ADJUSTED = false;
-    private final String OUTPUT_SIZE = "full";
-    private final String DATA_TYPE = "csv";
+    private static final String FUNCTION = "TIME_SERIES_INTRADAY";
+    private static final boolean ADJUSTED = false;
+    private static final String OUTPUT_SIZE = "full";
+    private static final String DATA_TYPE = "csv";
 
     private final String apiKey;
+    private final boolean premium;
 
-    public AlphaVantageDownloader(String apiKey, String ticker, TimeFrame timeFrame, boolean extendedHours) {
+    public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, TimeFrame timeFrame, boolean extendedHours) {
         super(ticker,timeFrame,extendedHours);
         this.apiKey = apiKey;
+        this.premium = premium;
     }
 
     public void download(String year, String month) {
@@ -89,7 +91,7 @@ public class AlphaVantageDownloader extends APIDownloader {
 
                     minuteCount.set(minuteCount.get() + 1);
                     if (minuteCount.get() == maxRequestsPerMinute) {
-                        Thread.sleep(61 * 1000);
+                        if (!isPremium()) Thread.sleep(61 * 1000);
                         minuteCount.set(0);
                     }
                 }
@@ -157,6 +159,10 @@ public class AlphaVantageDownloader extends APIDownloader {
         return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval="+getTimeFrame().getTag()+"&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
     }
 
+
+    public boolean isPremium() {
+        return premium;
+    }
 
     public String getApiKey() {
         return apiKey;
