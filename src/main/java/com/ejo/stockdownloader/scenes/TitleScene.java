@@ -58,22 +58,22 @@ public class TitleScene extends Scene {
 
 
     //Sidebar Elements
-    //TODO: Add a clearer spacing method between fields
+    private final int yInc = 25;
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15,25),new Vector(110,20),ColorE.BLUE, downloadMode,"Live Data", "API");
 
-    private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours",new Vector(15,105),new Vector(110,20),new ColorE(0,200,255,255), liveExtendedHours);
+    private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours",new Vector(15,modeDownloadMode.getPos().getY() + 80),new Vector(110,20),new ColorE(0,200,255,255), liveExtendedHours);
 
-    private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15,105),new Vector(110,20),ColorE.BLUE, api,"AlphaVantage");
-    private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15,165),new Vector(110,20),ColorE.WHITE, alphaVantageKey,"API Key",false);
-    private final ToggleUI toggleAlphaVantagePremium = new ToggleUI("Is Key Premium",new Vector(15,190),new Vector(110,20),new ColorE(0,200,255,255), alphaVantagePremium);
-    private final ToggleUI toggleAlphaVantageExtendedHours = new ToggleUI("Extended Hours",new Vector(15,190 + 25),new Vector(110,20),new ColorE(0,200,255,255), alphaVantageExtendedHours);
-    private final ModeCycleUI<String> modeAlphaVantageTime = new ModeCycleUI<>("Time",new Vector(15,215 + 25),new Vector(110,20),ColorE.BLUE, alphaVantageTime,"Month","All", "Range");
-    private final TextFieldUI fieldAlphaVantageYear = new TextFieldUI(new Vector(88,240 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYear,"",true,4);
-    private final TextFieldUI fieldAlphaVantageMonth = new TextFieldUI(new Vector(56,240 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonth,"",true,2);
-    private final TextFieldUI fieldAlphaVantageYearStart = new TextFieldUI(new Vector(88,240 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYearStart,"",true,4);
-    private final TextFieldUI fieldAlphaVantageMonthStart = new TextFieldUI(new Vector(56,240 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonthStart,"",true,2);
-    private final TextFieldUI fieldAlphaVantageYearEnd = new TextFieldUI(new Vector(88,265 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYearEnd,"",true,4);
-    private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56,265 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonthEnd,"",true,2);
+    private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15,modeDownloadMode.getPos().getY() + 80),new Vector(110,20),ColorE.BLUE, api,"AlphaVantage");
+    private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15,modeApi.getPos().getY() + 60),new Vector(110,20),ColorE.WHITE, alphaVantageKey,"API Key",false);
+    private final ToggleUI toggleAlphaVantagePremium = new ToggleUI("Is Key Premium",new Vector(15,fieldAlphaVantageKey.getPos().getY() + yInc),new Vector(110,20),new ColorE(0,200,255,255), alphaVantagePremium);
+    private final ToggleUI toggleAlphaVantageExtendedHours = new ToggleUI("Extended Hours",new Vector(15,toggleAlphaVantagePremium.getPos().getY() + yInc),new Vector(110,20),new ColorE(0,200,255,255), alphaVantageExtendedHours);
+    private final ModeCycleUI<String> modeAlphaVantageTime = new ModeCycleUI<>("Time",new Vector(15,toggleAlphaVantageExtendedHours.getPos().getY() + yInc),new Vector(110,20),ColorE.BLUE, alphaVantageTime,"Month","All", "Range");
+    private final TextFieldUI fieldAlphaVantageYear = new TextFieldUI(new Vector(88,modeAlphaVantageTime.getPos().getY() + yInc),new Vector(37,20),ColorE.WHITE, alphaVantageYear,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonth = new TextFieldUI(new Vector(56,modeAlphaVantageTime.getPos().getY() + yInc),new Vector(22,20),ColorE.WHITE, alphaVantageMonth,"",true,2);
+    private final TextFieldUI fieldAlphaVantageYearStart = new TextFieldUI(new Vector(88,modeAlphaVantageTime.getPos().getY() + yInc),new Vector(37,20),ColorE.WHITE, alphaVantageYearStart,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonthStart = new TextFieldUI(new Vector(56,modeAlphaVantageTime.getPos().getY() + yInc),new Vector(22,20),ColorE.WHITE, alphaVantageMonthStart,"",true,2);
+    private final TextFieldUI fieldAlphaVantageYearEnd = new TextFieldUI(new Vector(88,fieldAlphaVantageYearStart.getPos().getY() + yInc),new Vector(37,20),ColorE.WHITE, alphaVantageYearEnd,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56,fieldAlphaVantageMonthStart.getPos().getY() + yInc),new Vector(22,20),ColorE.WHITE, alphaVantageMonthEnd,"",true,2);
 
     private final SideBarUI sideBarSettings = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200),
             modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth, fieldAlphaVantageYearStart,fieldAlphaVantageMonthStart, fieldAlphaVantageYearEnd, fieldAlphaVantageMonthEnd);
