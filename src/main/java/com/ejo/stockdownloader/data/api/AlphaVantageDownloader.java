@@ -115,6 +115,14 @@ public class AlphaVantageDownloader extends APIDownloader {
         downloadGroup(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
     }
 
+    public void downloadRange(String startYear, String startMonth, String endYear, String endMonth) {
+        try {
+            downloadGroup(Integer.parseInt(startYear),Integer.parseInt(startMonth),Integer.parseInt(endYear),Integer.parseInt(endMonth));
+        } catch (ClassCastException e) {
+            e.printStackTrace();
+        }
+    }
+
     //TODO: Have this download the last month, then combine to the All CSV
     public void updateAll() {
 

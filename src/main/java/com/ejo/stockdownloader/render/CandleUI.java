@@ -5,7 +5,7 @@ import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ElementUI;
-import com.ejo.glowui.util.QuickDraw;
+import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.data.Stock;
 
 public class CandleUI extends ElementUI {

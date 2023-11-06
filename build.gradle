@@ -14,8 +14,9 @@ project.ext.lwjglVersion = "3.3.1"
 project.ext.lwjglNatives = "natives-windows"
 
 dependencies {
-    implementation 'com.github.evanobenauer:GlowUI:50072322e9'
-    implementation 'com.github.evanobenauer:GlowLib:1.1.9'
+    implementation 'com.github.evanobenauer:GlowUI:1011021e67'
+    implementation 'com.github.evanobenauer:GlowLib:1.2.1'
+    implementation 'com.github.evanobenauer:UIPhysics:793cdf755a'
 
     implementation 'org.apache.logging.log4j:log4j:2.11.2'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.2'

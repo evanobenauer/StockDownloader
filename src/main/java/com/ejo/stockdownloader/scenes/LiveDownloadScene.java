@@ -12,8 +12,8 @@ import com.ejo.glowui.scene.elements.SideBarUI;
 import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.SliderUI;
-import com.ejo.glowui.util.DrawUtil;
-import com.ejo.glowui.util.QuickDraw;
+import com.ejo.glowui.util.Util;
+import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.util.StockDrawUtil;
@@ -91,9 +91,6 @@ public class LiveDownloadScene extends Scene {
         //Draw Stock Ticker
         QuickDraw.drawText("Downloading: " + stock.getTicker() + "-" + stock.getTimeFrame().getTag(), new Font("Arial", Font.PLAIN, 10), new Vector(16, 1), ColorE.WHITE);
 
-        //Draw FPS-TPS
-        QuickDraw.drawFPSTPS(this, new Vector(1, 14), 10, false);
-
         super.draw();
 
         //Draw X for Exit Button
@@ -126,7 +123,7 @@ public class LiveDownloadScene extends Scene {
         if (StockUtil.isPriceActive(stock.isExtendedHours(),StockUtil.getAdjustedCurrentTime())) {
             forceFrameWatch.start();
             if (forceFrameWatch.hasTimePassedS(.5)) {
-                DrawUtil.forceRenderFrame();
+                Util.forceRenderFrame();
                 forceFrameWatch.restart();
             }
         } else {

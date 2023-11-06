@@ -3,7 +3,7 @@ package com.ejo.stockdownloader.util;
 import com.ejo.glowlib.math.MathE;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
-import com.ejo.glowui.util.QuickDraw;
+import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.render.CandleUI;
 

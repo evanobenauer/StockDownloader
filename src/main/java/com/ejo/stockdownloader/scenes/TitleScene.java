@@ -12,19 +12,19 @@ import com.ejo.glowui.scene.elements.ProgressBarUI;
 import com.ejo.glowui.scene.elements.SideBarUI;
 import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.shape.RectangleUI;
-import com.ejo.glowui.scene.elements.shape.physics.PhysicsDraggableUI;
-import com.ejo.glowui.scene.elements.shape.physics.PhysicsObjectUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
 import com.ejo.glowui.scene.elements.widget.ToggleUI;
-import com.ejo.glowui.util.Fonts;
-import com.ejo.glowui.util.QuickDraw;
+import com.ejo.glowui.util.render.Fonts;
+import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.uiphysics.elements.PhysicsDraggableUI;
+import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
 import java.awt.*;
 import java.util.Random;
@@ -51,9 +51,14 @@ public class TitleScene extends Scene {
     private final Setting<String> alphaVantageTime = new Setting<>("monthMode","All");
     private final Setting<String> alphaVantageYear = new Setting<>("year","2000");
     private final Setting<String> alphaVantageMonth = new Setting<>("month","01");
+    private final Setting<String> alphaVantageYearStart = new Setting<>("yearStart","2000");
+    private final Setting<String> alphaVantageMonthStart = new Setting<>("monthStart","01");
+    private final Setting<String> alphaVantageYearEnd = new Setting<>("yearEnd","2000");
+    private final Setting<String> alphaVantageMonthEnd = new Setting<>("monthEnd","01");
 
 
     //Sidebar Elements
+    //TODO: Add a clearer spacing method between fields
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15,25),new Vector(110,20),ColorE.BLUE, downloadMode,"Live Data", "API");
 
     private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours",new Vector(15,105),new Vector(110,20),new ColorE(0,200,255,255), liveExtendedHours);
@@ -65,9 +70,13 @@ public class TitleScene extends Scene {
     private final ModeCycleUI<String> modeAlphaVantageTime = new ModeCycleUI<>("Time",new Vector(15,215 + 25),new Vector(110,20),ColorE.BLUE, alphaVantageTime,"Month","All", "Range");
     private final TextFieldUI fieldAlphaVantageYear = new TextFieldUI(new Vector(88,240 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYear,"",true,4);
     private final TextFieldUI fieldAlphaVantageMonth = new TextFieldUI(new Vector(56,240 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonth,"",true,2);
+    private final TextFieldUI fieldAlphaVantageYearStart = new TextFieldUI(new Vector(88,240 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYearStart,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonthStart = new TextFieldUI(new Vector(56,240 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonthStart,"",true,2);
+    private final TextFieldUI fieldAlphaVantageYearEnd = new TextFieldUI(new Vector(88,265 + 25),new Vector(37,20),ColorE.WHITE, alphaVantageYearEnd,"",true,4);
+    private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56,265 + 25),new Vector(22,20),ColorE.WHITE, alphaVantageMonthEnd,"",true,2);
 
     private final SideBarUI sideBarSettings = new SideBarUI("Settings",SideBarUI.Type.RIGHT,140,false,new ColorE(0,125,200,200),
-            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth);
+            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth, fieldAlphaVantageYearStart,fieldAlphaVantageMonthStart, fieldAlphaVantageYearEnd, fieldAlphaVantageMonthEnd);
 
 
     //Center Elements
@@ -100,9 +109,7 @@ public class TitleScene extends Scene {
             if (api.get().equals("AlphaVantage")) runAlphaVantageDownload();
 
             //SET WARNING TEXT IF A DOWNLOAD IS ACTIVE, BUT BUTTON IS CLICKED AGAIN
-            if (apiDownloader.isDownloadActive().get())
-                warningText.setText("Download Already In Progress!").setColor(ColorE.RED);
-
+            if (apiDownloader.isDownloadActive().get()) warningText.setText("Download Already In Progress!").setColor(ColorE.RED);
         }
     });
 
@@ -124,7 +131,8 @@ public class TitleScene extends Scene {
             Random random = new Random();
             //Add Bouncing Squares
             for (int i = 0; i < 20; i++) {
-                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5),new Vector(10,10),new ColorE(random.nextInt(),random.nextInt(),random.nextInt(),255)),1,new Vector(random.nextDouble(-5,5),random.nextDouble(-5,5)),Vector.NULL));
+                int speed = 30;
+                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5),new Vector(10,10),new ColorE(random.nextInt(),random.nextInt(),random.nextInt(),255)),1,new Vector(random.nextDouble(-speed,speed),random.nextDouble(-speed,speed)),Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
@@ -188,7 +196,7 @@ public class TitleScene extends Scene {
     }
 
     private void drawSidebarData() {
-        QuickDraw.drawTextCentered("Download Mode:",new Font("Arial",Font.PLAIN,16), sideBarSettings.getBarPos().getAdded(0,45),new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
+        QuickDraw.drawTextCentered("Download Mode:",new Font("Arial",Font.PLAIN,16), sideBarSettings.getPos().getAdded(0,45),new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
         modeDownloadMode.setPos(new Vector(modeDownloadMode.getPos().getX(),55));
 
         if (downloadMode.get().equals("Live Data")) {
@@ -201,6 +209,10 @@ public class TitleScene extends Scene {
             modeAlphaVantageTime.setEnabled(false);
             fieldAlphaVantageMonth.setEnabled(false);
             fieldAlphaVantageYear.setEnabled(false);
+            fieldAlphaVantageMonthStart.setEnabled(false);
+            fieldAlphaVantageYearStart.setEnabled(false);
+            fieldAlphaVantageMonthEnd.setEnabled(false);
+            fieldAlphaVantageYearEnd.setEnabled(false);
         } else if (downloadMode.get().equals("API")) {
             toggleLiveExtendedHours.setEnabled(false);
 
@@ -214,16 +226,26 @@ public class TitleScene extends Scene {
             fieldAlphaVantageMonth.setEnabled(alphaVantageTime.get().equals("Month") && api.get().equals("AlphaVantage"));
             fieldAlphaVantageYear.setEnabled(alphaVantageTime.get().equals("Month") && api.get().equals("AlphaVantage"));
 
+            fieldAlphaVantageMonthStart.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
+            fieldAlphaVantageYearStart.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
+            fieldAlphaVantageMonthEnd.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
+            fieldAlphaVantageYearEnd.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
+
             if (api.get().equals("AlphaVantage")) {
-                QuickDraw.drawTextCentered("Alpha Vantage Settings:", new Font("Arial", Font.PLAIN, 12), sideBarSettings.getBarPos().getAdded(0, 150), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
+                QuickDraw.drawTextCentered("Alpha Vantage Settings:", new Font("Arial", Font.PLAIN, 12), sideBarSettings.getPos().getAdded(0, 150), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
 
                 if (alphaVantageTime.get().equals("Month")) {
-                    QuickDraw.drawText("Month:", new Font("Arial", Font.PLAIN, 14), sideBarSettings.getBarPos().getAdded(15, fieldAlphaVantageMonth.getPos().getY() + 3), ColorE.WHITE);
-                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getBarPos().getAdded(fieldAlphaVantageMonth.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
+                    QuickDraw.drawText("Month:", new Font("Arial", Font.PLAIN, 14), sideBarSettings.getPos().getAdded(15, fieldAlphaVantageMonth.getPos().getY() + 3), ColorE.WHITE);
+                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(fieldAlphaVantageMonth.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
+                } else if (alphaVantageTime.get().equals("Range")) {
+                    QuickDraw.drawText("Start:", new Font("Arial", Font.PLAIN, 14), sideBarSettings.getPos().getAdded(15, fieldAlphaVantageMonthStart.getPos().getY() + 3), ColorE.WHITE);
+                    QuickDraw.drawText("End:", new Font("Arial", Font.PLAIN, 14), sideBarSettings.getPos().getAdded(15, fieldAlphaVantageMonthEnd.getPos().getY() + 3), ColorE.WHITE);
+                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(fieldAlphaVantageMonthStart.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
+                    QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(fieldAlphaVantageMonthEnd.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
                 }
             }
 
-            QuickDraw.drawTextCentered("API:",new Font("Arial",Font.PLAIN,16), sideBarSettings.getBarPos().getAdded(0,95),new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
+            QuickDraw.drawTextCentered("API:",new Font("Arial",Font.PLAIN,16), sideBarSettings.getPos().getAdded(0,95),new Vector(sideBarSettings.getWidth(),0),ColorE.WHITE);
         } else {
             for (ElementUI element : sideBarSettings.getElementList()) {
                 element.setEnabled(false);
@@ -250,6 +272,12 @@ public class TitleScene extends Scene {
                 }
             } else if (alphaVantageTime.get().equals("All")) {
                 downloader.downloadAll();
+            } else if (alphaVantageTime.get().equals("Range")) {
+                if (alphaVantageYearStart.get().length() == 4 && alphaVantageMonthStart.get().length() == 2 && alphaVantageYearEnd.get().length() == 4 && alphaVantageMonthEnd.get().length() == 2) {
+                    downloader.downloadRange(alphaVantageYearStart.get(), alphaVantageMonthStart.get(), alphaVantageYearEnd.get(), alphaVantageMonthEnd.get());
+                } else {
+                    warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
+                }
             } else {
                 System.out.println("Lol, Maybe ill add an update mode to only download the last month?");
             }
