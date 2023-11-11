@@ -159,12 +159,14 @@ public class TitleScene extends Scene {
 
         //Set Warning Text
         if (apiDownloader != null && !apiDownloader.isDownloadActive().get() && apiDownloader.isDownloadFinished().get()) {
-            if (apiDownloader.isDownloadSuccessful().get()) {
-                warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
-            } else if (apiDownloader instanceof AlphaVantageDownloader avd) {
+            if (apiDownloader instanceof AlphaVantageDownloader avd) {
                 warningText.setText(avd.isLimitReached() ? "Error! Daily Download Limit Reached!\\n Successful Downloads Saved!" : "Download Failed!").setColor(ColorE.RED);
             } else {
-                warningText.setText("Download Failed!").setColor(ColorE.RED);
+                if (apiDownloader.isDownloadSuccessful().get()) {
+                    warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
+                } else {
+                    warningText.setText("Download Failed!").setColor(ColorE.RED);
+                }
             }
         }
 

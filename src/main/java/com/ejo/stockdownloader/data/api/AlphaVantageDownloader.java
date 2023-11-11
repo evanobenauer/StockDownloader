@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 //Realtime intraday data from AlphaVantage is premium only
+//There is now a 25 daily request limit for free keys
 //KEY: "H0JHAOU61I4MESDZ"
 //https://www.alphavantage.co/documentation/
 public class AlphaVantageDownloader extends APIDownloader {
