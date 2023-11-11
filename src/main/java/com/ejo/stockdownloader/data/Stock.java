@@ -87,7 +87,7 @@ public class Stock {
         updateClose();
 
         //Update live price every provided delay second or update the live price on the start of every open
-        updateLivePriceDataDelay(liveDelayS);
+        updateLivePriceData(liveDelayS);
 
         //Update the Open of each segment
         //[If a force update every open is unwanted, remove the force update and add this inside the updateTimer after the updateLivePriceData()]
@@ -132,7 +132,7 @@ public class Stock {
      * is up to date
      * @param liveDelayS
      */
-    public void updateLivePriceDataDelay(double liveDelayS) {
+    public void updateLivePriceData(double liveDelayS) {
         updateTimer.start();
         if (updateTimer.hasTimePassedS(liveDelayS) || shouldClose()) {
             doLivePriceUpdate.run(() -> {
