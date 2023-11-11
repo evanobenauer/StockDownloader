@@ -77,9 +77,11 @@ public class AlphaVantageDownloader extends APIDownloader {
                     downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
 
                     //Load the last file, check if error. If so, break and set limit reached
-                    ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get()));
+                    String lastFileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get());
+                    ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath,lastFileName);
                     if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
                         String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
+                        FileManager.deleteFile(tempPath,lastFileName.replace(".csv","") + ".csv");
                         CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + newSuffix);
                         CSVManager.clearDuplicates(mainPath,fileName.replace(suffix,"") + newSuffix);
                         FileManager.deleteFile(tempPath,"");
