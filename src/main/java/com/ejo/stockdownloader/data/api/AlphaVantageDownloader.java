@@ -78,10 +78,10 @@ public class AlphaVantageDownloader extends APIDownloader {
 
                     //Load the last file, check if error. If so, break and set limit reached
                     ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get()));
-                    if (lastFile.get(0)[0].contains("{")) {
-                        FileManager.deleteFile(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get()) + ".csv");
-                        CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get());
-                        CSVManager.clearDuplicates(mainPath,fileName.replace(suffix,"") + getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get());
+                    if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
+                        String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
+                        CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + newSuffix);
+                        CSVManager.clearDuplicates(mainPath,fileName.replace(suffix,"") + newSuffix);
                         FileManager.deleteFile(tempPath,"");
                         endDownloadContainers(false);
                         setLimitReached(true);
