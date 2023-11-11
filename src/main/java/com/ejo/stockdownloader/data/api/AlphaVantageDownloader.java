@@ -12,6 +12,7 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 //Realtime intraday data from AlphaVantage is premium only
 //KEY: "H0JHAOU61I4MESDZ"
@@ -26,10 +27,13 @@ public class AlphaVantageDownloader extends APIDownloader {
     private final String apiKey;
     private final boolean premium;
 
+    private boolean limitReached;
+
     public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, TimeFrame timeFrame, boolean extendedHours) {
         super(ticker,timeFrame,extendedHours);
         this.apiKey = apiKey;
         this.premium = premium;
+        this.limitReached = false;
     }
 
     public void download(String year, String month) {
@@ -71,10 +75,17 @@ public class AlphaVantageDownloader extends APIDownloader {
                 while (true) {
                     downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
 
-                    /*
-                    if (file is over the max limit) break;
-                    add download failed warning text!
-                     */
+                    //Load the last file, check if error. If so, break and set limit reached
+                    ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get()));
+                    if (lastFile.get(0)[0].contains("{")) {
+                        FileManager.deleteFile(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get()) + ".csv");
+                        CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get());
+                        CSVManager.clearDuplicates(mainPath,fileName.replace(suffix,"") + getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get());
+                        FileManager.deleteFile(tempPath,"");
+                        endDownloadContainers(false);
+                        setLimitReached(true);
+                        break;
+                    }
 
                     double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
                     double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / (yearDiff + 1);
@@ -113,14 +124,6 @@ public class AlphaVantageDownloader extends APIDownloader {
 
     public void downloadAll() {
         downloadGroup(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
-    }
-
-    public void downloadRange(String startYear, String startMonth, String endYear, String endMonth) {
-        try {
-            downloadGroup(Integer.parseInt(startYear),Integer.parseInt(startMonth),Integer.parseInt(endYear),Integer.parseInt(endMonth));
-        } catch (ClassCastException e) {
-            e.printStackTrace();
-        }
     }
 
     //TODO: Have this download the last month, then combine to the All CSV
@@ -167,6 +170,13 @@ public class AlphaVantageDownloader extends APIDownloader {
         return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval="+getTimeFrame().getTag()+"&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
     }
 
+    private void setLimitReached(boolean limitReached) {
+        this.limitReached = limitReached;
+    }
+
+    public boolean isLimitReached() {
+        return limitReached;
+    }
 
     public boolean isPremium() {
         return premium;
