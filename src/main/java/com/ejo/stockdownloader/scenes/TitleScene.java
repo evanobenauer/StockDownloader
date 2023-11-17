@@ -43,7 +43,7 @@ public class TitleScene extends Scene {
 
     //Live Data Settings
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive", false);
-    private final Setting<String> livePriceSource = new Setting<>("priceSourceLive", "MarketWatch");
+    private final Setting<Stock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", Stock.PriceSource.MARKETWATCH);
 
     //Alpha Vantage Settings
     private final Setting<String> alphaVantageKey = new Setting<>("apiKey", "H0JHAOU61I4MESDZ");
@@ -63,7 +63,7 @@ public class TitleScene extends Scene {
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15, 25), new Vector(110, 20), ColorE.BLUE, downloadMode, "Live Data", "API");
 
     private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours", new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), new ColorE(0, 200, 255, 255), liveExtendedHours);
-    private final ModeCycleUI<String> modeLivePriceSource = new ModeCycleUI<>("Source",new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, "MarketWatch","YahooFinance");
+    private final ModeCycleUI<Stock.PriceSource> modeLivePriceSource = new ModeCycleUI<Stock.PriceSource>("Source",new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, Stock.PriceSource.MARKETWATCH, Stock.PriceSource.YAHOOFINANCE);
 
     private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), ColorE.BLUE, api, "AlphaVantage");
     private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15, modeApi.getPos().getY() + 60), new Vector(110, 20), ColorE.WHITE, alphaVantageKey, "API Key", false);

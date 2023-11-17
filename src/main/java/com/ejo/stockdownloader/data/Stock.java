@@ -22,7 +22,7 @@ public class Stock {
     private final String ticker;
     private final TimeFrame timeFrame;
     private final boolean extendedHours;
-    private String priceSource;
+    private PriceSource priceSource;
 
     //Historical Data HashMap
     private HashMap<Long,String[]> dataHash;
@@ -50,7 +50,7 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, String priceSource) {
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource priceSource) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
@@ -224,11 +224,11 @@ public class Stock {
     private void setLivePrice() throws IOException {
         float livePrice;
         switch (getPriceSource()) {
-            case ("MarketWatch") -> {
+            case MARKETWATCH -> {
                 String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
                 livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
             }
-            case ("YahooFinance") -> {
+            case YAHOOFINANCE -> {
                 String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
                 livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
             }
@@ -270,7 +270,7 @@ public class Stock {
         return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
-    public void setPriceSource(String priceSource) {
+    public void setPriceSource(PriceSource priceSource) {
         this.priceSource = priceSource;
     }
 
@@ -407,7 +407,7 @@ public class Stock {
         return dataHash;
     }
 
-    public String getPriceSource() {
+    public PriceSource getPriceSource() {
         return priceSource;
     }
 
@@ -421,6 +421,26 @@ public class Stock {
 
     public String getTicker() {
         return ticker;
+    }
+
+
+    public enum PriceSource {
+        MARKETWATCH("MarketWatch"),
+        YAHOOFINANCE("YahooFinance");
+
+        private final String string;
+        PriceSource(String string) {
+            this.string = string;
+        }
+
+        public String getString() {
+            return string;
+        }
+
+        @Override
+        public String toString() {
+            return getString();
+        }
     }
 
 }
