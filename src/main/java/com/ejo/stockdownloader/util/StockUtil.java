@@ -2,13 +2,10 @@ package com.ejo.stockdownloader.util;
 
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 
@@ -16,26 +13,21 @@ public class StockUtil {
 
     public static final Container<Integer> SECOND_ADJUST = new Container<>(0);
 
-    /**
-     * This method downloads live stock data from Yahoo Finance. This is how we get the live data for the stock and proceed with downloading our numbers. "raw" is the raw data, "fmt" is the formatted data
-     * @return
-     * @throws IOException
-     */
-    @SuppressWarnings("All") //TODO: use web scraping to get data instead of yahoo finance
-    public static JSONObject getYahooFinanceJsonData(String stockTicker, int version) throws IOException, JSONException {
-        //This uses the YahooFinance API to get the live stock price
-        //Yahoo Finance will sometimes return: "Too Many Requests".
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        String url = "https://query1.finance.yahoo.com/" + "v" + version + "/finance/quoteSummary/" + stockTicker + "?modules=price";
-        HttpGet httpGet = new HttpGet(url);
-        HttpResponse response = httpClient.execute(httpGet); //This causes lots of lag
+    private static final String WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36";
 
-        String jsonString = EntityUtils.toString(response.getEntity());
-        JSONObject jsonObject = new JSONObject(jsonString).getJSONObject("quoteSummary");
-        String resultJsonString = jsonObject.get("result").toString().replace("[", "").replace("]", "");
-        JSONObject priceObject = new JSONObject(resultJsonString).getJSONObject("price");
+    //TODO: This is very dependent on internet speed. Maybe put it on its own thread as not to mess up stuff
+    public static float getWebScrapePrice(String url, String attributeKey, String attributeValue, int priceIndex) throws IOException {
+        Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+        Elements cssElements = doc.getElementsByAttributeValue(attributeKey, attributeValue);
+        String priceString = cssElements.get(priceIndex).text().replace("$","");
+        return priceString.equals("") ? -1 : Float.parseFloat(priceString);
+    }
 
-        return priceObject;
+    public static float getWebScrapePrice(String url, String cssQuery, int priceIndex) throws IOException {
+        Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+        Elements cssElements = doc.select(cssQuery);
+        String priceString = cssElements.get(priceIndex).text().replace("$","");
+        return priceString.equals("") ? -1 : Float.parseFloat(priceString);
     }
 
     public static boolean isTradingHours(DateTime currentTime) {

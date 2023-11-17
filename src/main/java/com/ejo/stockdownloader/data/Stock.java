@@ -8,7 +8,6 @@ import com.ejo.glowlib.time.StopWatch;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -216,20 +215,15 @@ public class Stock {
 
 
     /**
-     * Sets the live price data from the yahoo finance json data
+     * Sets the live price data from web scraping
      * @throws IOException
      * @throws JSONException
      */
-    @SuppressWarnings("All")
-    private void setLivePrice() throws IOException, JSONException {
-        JSONObject liveData = StockUtil.getYahooFinanceJsonData(getTicker(),6);
-        DateTime t = StockUtil.getAdjustedCurrentTime();
-        if (StockUtil.isTradingHours(t)) this.price = liveData.getJSONObject("regularMarketPrice").getFloat("raw");
-        if (StockUtil.isPostMarket(t))this.price = liveData.getJSONObject("postMarketPrice").getFloat("raw");
-        if (StockUtil.isPreMarket(t))this.price = liveData.getJSONObject("preMarketPrice").getFloat("raw");
-        //this.volume = liveData.getJSONObject("regularMarketVolume").getInt("raw");
+    private void setLivePrice() throws IOException {
+        String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
+        float livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+        if (livePrice != -1) this.price = livePrice;
     }
-
 
 
     /**
