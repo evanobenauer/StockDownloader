@@ -43,6 +43,7 @@ public class TitleScene extends Scene {
 
     //Live Data Settings
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive", false);
+    private final Setting<String> livePriceSource = new Setting<>("priceSourceLive", "MarketWatch");
 
     //Alpha Vantage Settings
     private final Setting<String> alphaVantageKey = new Setting<>("apiKey", "H0JHAOU61I4MESDZ");
@@ -62,6 +63,7 @@ public class TitleScene extends Scene {
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15, 25), new Vector(110, 20), ColorE.BLUE, downloadMode, "Live Data", "API");
 
     private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours", new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), new ColorE(0, 200, 255, 255), liveExtendedHours);
+    private final ModeCycleUI<String> modeLivePriceSource = new ModeCycleUI<>("Source",new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, "MarketWatch","YahooFinance");
 
     private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), ColorE.BLUE, api, "AlphaVantage");
     private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15, modeApi.getPos().getY() + 60), new Vector(110, 20), ColorE.WHITE, alphaVantageKey, "API Key", false);
@@ -76,7 +78,7 @@ public class TitleScene extends Scene {
     private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56, fieldAlphaVantageMonthStart.getPos().getY() + yInc), new Vector(22, 20), ColorE.WHITE, alphaVantageMonthEnd, "", true, 2);
 
     private final SideBarUI sideBarSettings = new SideBarUI("Settings", SideBarUI.Type.RIGHT, 140, false, new ColorE(0, 125, 200, 200),
-            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth, fieldAlphaVantageYearStart, fieldAlphaVantageMonthStart, fieldAlphaVantageYearEnd, fieldAlphaVantageMonthEnd);
+            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth, fieldAlphaVantageYearStart, fieldAlphaVantageMonthStart, fieldAlphaVantageYearEnd, fieldAlphaVantageMonthEnd,modeLivePriceSource);
 
 
     //Center Elements
@@ -99,7 +101,7 @@ public class TitleScene extends Scene {
         if (stockTickerField.getContainer().get().equals("")) return;
 
         if (downloadMode.get().equals("Live Data")) {
-            getWindow().setScene(new LiveDownloadScene(new Stock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get())));
+            getWindow().setScene(new LiveDownloadScene(new Stock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get(),livePriceSource.get())));
 
         } else if (downloadMode.get().equals("API")) {
             warningText.setText("");
@@ -213,6 +215,7 @@ public class TitleScene extends Scene {
 
         if (downloadMode.get().equals("Live Data")) {
             toggleLiveExtendedHours.setEnabled(true);
+            modeLivePriceSource.setEnabled(true);
 
             modeApi.setEnabled(false);
             fieldAlphaVantageKey.setEnabled(false);
@@ -227,6 +230,7 @@ public class TitleScene extends Scene {
             fieldAlphaVantageYearEnd.setEnabled(false);
         } else if (downloadMode.get().equals("API")) {
             toggleLiveExtendedHours.setEnabled(false);
+            modeLivePriceSource.setEnabled(false);
 
             modeApi.setEnabled(true);
 

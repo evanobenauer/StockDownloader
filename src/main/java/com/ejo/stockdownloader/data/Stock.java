@@ -22,6 +22,7 @@ public class Stock {
     private final String ticker;
     private final TimeFrame timeFrame;
     private final boolean extendedHours;
+    private String priceSource;
 
     //Historical Data HashMap
     private HashMap<Long,String[]> dataHash;
@@ -49,10 +50,11 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours) {
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, String priceSource) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
+        this.priceSource = priceSource;
 
         this.dataHash = loadHistoricalData();
 
@@ -220,8 +222,18 @@ public class Stock {
      * @throws JSONException
      */
     private void setLivePrice() throws IOException {
-        String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
-        float livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+        float livePrice;
+        switch (getPriceSource()) {
+            case ("MarketWatch") -> {
+                String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
+                livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+            }
+            case ("YahooFinance") -> {
+                String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
+                livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
+            }
+            default -> livePrice = -1;
+        }
         if (livePrice != -1) this.price = livePrice;
     }
 
@@ -258,6 +270,9 @@ public class Stock {
         return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
+    public void setPriceSource(String priceSource) {
+        this.priceSource = priceSource;
+    }
 
     /**
      * Checks if the stock should update live data. This method has the main purpose of stopping the update method if returned false
@@ -390,6 +405,10 @@ public class Stock {
 
     public HashMap<Long, String[]> getHistoricalData() {
         return dataHash;
+    }
+
+    public String getPriceSource() {
+        return priceSource;
     }
 
     public boolean isExtendedHours() {
