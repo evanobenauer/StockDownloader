@@ -17,17 +17,25 @@ public class StockUtil {
 
     //TODO: This is very dependent on internet speed. Maybe put it on its own thread as not to mess up stuff
     public static float getWebScrapePrice(String url, String attributeKey, String attributeValue, int priceIndex) throws IOException {
-        Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
-        Elements cssElements = doc.getElementsByAttributeValue(attributeKey, attributeValue);
-        String priceString = cssElements.get(priceIndex).text().replace("$","");
-        return priceString.equals("") ? -1 : Float.parseFloat(priceString);
+        try {
+            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+            Elements cssElements = doc.getElementsByAttributeValue(attributeKey, attributeValue);
+            String priceString = cssElements.get(priceIndex).text().replace("$", "");
+            return priceString.equals("") ? -1 : Float.parseFloat(priceString);
+        } catch (IndexOutOfBoundsException e) {
+            return -1;
+        }
     }
 
     public static float getWebScrapePrice(String url, String cssQuery, int priceIndex) throws IOException {
-        Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
-        Elements cssElements = doc.select(cssQuery);
-        String priceString = cssElements.get(priceIndex).text().replace("$","");
-        return priceString.equals("") ? -1 : Float.parseFloat(priceString);
+        try {
+            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+            Elements cssElements = doc.select(cssQuery);
+            String priceString = cssElements.get(priceIndex).text().replace("$", "");
+            return priceString.equals("") ? -1 : Float.parseFloat(priceString);
+        } catch (IndexOutOfBoundsException e) {
+            return -1;
+        }
     }
 
     public static boolean isTradingHours(DateTime currentTime) {
@@ -49,7 +57,7 @@ public class StockUtil {
 
     public static DateTime getAdjustedCurrentTime() {
         DateTime ct = DateTime.getCurrentDateTime();
-        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(),ct.getMinuteInt(),ct.getSecondInt() + SECOND_ADJUST.get());
+        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() + SECOND_ADJUST.get());
     }
 
 }

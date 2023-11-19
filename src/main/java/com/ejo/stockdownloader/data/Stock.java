@@ -7,7 +7,6 @@ import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
-import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,6 +14,8 @@ import java.util.HashMap;
 /**
  * The stock class is a multi use class. It encompasses both loading historical data and adding new data to said history. The live data is updated
  * by a method whenever it is called
+ * Historical data is saved in the folder: stock_data/ticker_timeframe.csv. Place data into this location for it to be
+ * saved and loaded with the stock
  */
 public class Stock {
 
@@ -22,10 +23,10 @@ public class Stock {
     private final String ticker;
     private final TimeFrame timeFrame;
     private final boolean extendedHours;
-    private PriceSource priceSource;
+    private PriceSource livePriceSource;
 
     //Historical Data HashMap
-    private HashMap<Long,String[]> dataHash;
+    private HashMap<Long,String[]> dataHash = new HashMap<>();
 
     //Open Time
     private DateTime openTime;
@@ -50,13 +51,13 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource priceSource) {
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
-        this.priceSource = priceSource;
+        this.livePriceSource = livePriceSource;
 
-        this.dataHash = loadHistoricalData();
+        this.dataHash = loadHistoricalData(); //TODO: Make this into a thread as to not slow down applications. Make sure to add progressbar data too
 
         this.setAllData(-1);
         this.closePercent = new Container<>(0d);
@@ -69,6 +70,18 @@ public class Stock {
         this.doClose.reset();
     }
 
+
+    /**
+     * Initiates the live price data from the stock
+     */
+    private void initLivePriceData() {
+        try {
+            setLivePrice();
+            setAllData(getPrice());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
@@ -97,21 +110,6 @@ public class Stock {
 
 
     /**
-     * Initiates the live price data from the stock
-     */
-    private void initLivePriceData() {
-        try {
-            setLivePrice();
-            setAllData(getPrice());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            System.out.println("Too Many Requests!");
-        }
-    }
-
-
-    /**
      * Retrieves and sets the live price data gathered for the stock. The minimum and maximum are set as well
      * @throws IOException
      */
@@ -122,8 +120,6 @@ public class Stock {
             if (getPrice() > getMax()) this.max = getPrice();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (JSONException e) {
-            System.out.println("Too Many Requests!");
         }
     }
 
@@ -205,40 +201,6 @@ public class Stock {
 
 
     /**
-     * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
-     * @param value
-     */
-    public void setAllData(float value) {
-        this.price = value;
-        this.open = value;
-        this.min = value;
-        this.max = value;
-    }
-
-
-    /**
-     * Sets the live price data from web scraping
-     * @throws IOException
-     * @throws JSONException
-     */
-    private void setLivePrice() throws IOException {
-        float livePrice;
-        switch (getPriceSource()) {
-            case MARKETWATCH -> {
-                String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
-                livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
-            }
-            case YAHOOFINANCE -> {
-                String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
-            }
-            default -> livePrice = -1;
-        }
-        if (livePrice != -1) this.price = livePrice;
-    }
-
-
-    /**
      * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
      * @return
      */
@@ -270,8 +232,36 @@ public class Stock {
         return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
-    public void setPriceSource(PriceSource priceSource) {
-        this.priceSource = priceSource;
+    /**
+     * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
+     * @param value
+     */
+    public void setAllData(float value) {
+        this.price = value;
+        this.open = value;
+        this.min = value;
+        this.max = value;
+    }
+
+    /**
+     * Sets the live price data from web scraping different websites depending on the live price source.
+     * These websites can be chosen upon stock object instantiation or set midway through the process
+     * @throws IOException
+     */
+    private void setLivePrice() throws IOException {
+        float livePrice;
+        switch (getLivePriceSource()) {
+            case MARKETWATCH -> {
+                String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
+                livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+            }
+            case YAHOOFINANCE -> {
+                String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
+                livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
+            }
+            default -> livePrice = -1;
+        }
+        if (livePrice != -1) this.price = livePrice;
     }
 
     /**
@@ -289,16 +279,6 @@ public class Stock {
         //Finally, if all checks pass,
         //return true;
     }
-
-    @SuppressWarnings("All")
-    private void setUpdatesStarted(boolean shouldStart) {
-        this.shouldStartUpdates = shouldStart;
-    }
-
-    private boolean shouldStartUpdates() {
-        return shouldStartUpdates;
-    }
-
 
     /**
      * This method will return true if the stock is at a place to go through with a split depending on the current TimeFrame
@@ -322,6 +302,16 @@ public class Stock {
     }
 
 
+    @SuppressWarnings("All")
+    private void setUpdatesStarted(boolean shouldStart) {
+        this.shouldStartUpdates = shouldStart;
+    }
+
+    public void setLivePriceSource(PriceSource livePriceSource) {
+        this.livePriceSource = livePriceSource;
+    }
+
+
     public float getPrice() {
         return price;
     }
@@ -332,10 +322,9 @@ public class Stock {
 
     public float getOpen(DateTime dateTime) {
         try {
-            if (dateTime == null) {
+            if (dateTime == null || dateTime.equals(getOpenTime())) {
                 return getOpen();
             } else {
-                if (dateTime.equals(getOpenTime())) return getOpen();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[0]);
             }
         } catch (NullPointerException e) {
@@ -345,10 +334,9 @@ public class Stock {
 
     public float getClose(DateTime dateTime) {
         try {
-            if (dateTime == null) {
+            if (dateTime == null || dateTime.equals(getOpenTime())) {
                 return getPrice();
             } else {
-                if (dateTime.equals(getOpenTime())) return getPrice();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[1]);
             }
         } catch (NullPointerException e) {
@@ -362,10 +350,9 @@ public class Stock {
 
     public float getMin(DateTime dateTime) {
         try {
-            if (dateTime == null) {
+            if (dateTime == null || dateTime.equals(getOpenTime())) {
                 return getMin();
             } else {
-                if (dateTime.equals(getOpenTime())) return getMin();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[2]);
             }
         } catch (NullPointerException e) {
@@ -379,10 +366,9 @@ public class Stock {
 
     public float getMax(DateTime dateTime) {
         try {
-            if (dateTime == null) {
+            if (dateTime == null || dateTime.equals(getOpenTime())) {
                 return getMax();
             } else {
-                if (dateTime.equals(getOpenTime())) return getMax();
                 return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[3]);
             }
         } catch (NullPointerException e) {
@@ -403,12 +389,16 @@ public class Stock {
         return openTime;
     }
 
-    public HashMap<Long, String[]> getHistoricalData() {
-        return dataHash;
+    private boolean shouldStartUpdates() {
+        return shouldStartUpdates;
     }
 
-    public PriceSource getPriceSource() {
-        return priceSource;
+    public PriceSource getLivePriceSource() {
+        return livePriceSource;
+    }
+
+    public HashMap<Long, String[]> getHistoricalData() {
+        return dataHash;
     }
 
     public boolean isExtendedHours() {
