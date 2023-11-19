@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
-group = 'com.ejo'
-version = '1.0-SNAPSHOT'
+group groupI
+version versionI
 
 repositories {
     mavenCentral()
@@ -22,8 +23,6 @@ dependencies {
 
     implementation 'org.apache.logging.log4j:log4j:2.11.2'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.2'
-
-    implementation 'org.json:json:20210307'
 
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
 
@@ -109,6 +108,13 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-zstd::$lwjglNatives"
 }
 
-test {
-    useJUnitPlatform()
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = groupI
+            artifactId = artifactI
+            version = versionI
+            from components.java
+        }
+    }
 }

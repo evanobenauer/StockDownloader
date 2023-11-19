@@ -87,7 +87,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                         FileManager.deleteFile(tempPath,"");
                         endDownloadContainers(false);
                         setLimitReached(true);
-                        break;
+                        return;
                     }
 
                     double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
