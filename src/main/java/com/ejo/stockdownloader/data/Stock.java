@@ -87,7 +87,7 @@ public class Stock {
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
      * **METHOD PROCESS: Waits... [Time to close: Updates the close, updates the price, updates the open], Waits...**
      */
-    public void updateData(double liveDelayS) {
+    public void updateLiveData(double liveDelayS) {
         //Updates the progress bar of each segmentation
         if (StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime())) updateClosePercent();
 
@@ -101,7 +101,7 @@ public class Stock {
         updateClose();
 
         //Update live price every provided delay second or update the live price on the start of every open
-        updateLivePriceData(liveDelayS);
+        updateLivePrice(liveDelayS);
 
         //Update the Open of each segment
         //[If a force update every open is unwanted, remove the force update and add this inside the updateTimer after the updateLivePriceData()]
@@ -113,9 +113,10 @@ public class Stock {
      * Retrieves and sets the live price data gathered for the stock. The minimum and maximum are set as well
      * @throws IOException
      */
-    public void updateLivePriceData() {
+    public void updateLivePrice() {
         try {
             setLivePrice();
+            if (getOpen() == -1) return;
             if (getPrice() < getMin()) this.min = getPrice();
             if (getPrice() > getMax()) this.max = getPrice();
         } catch (IOException e) {
@@ -126,14 +127,14 @@ public class Stock {
 
     /**
      * Updates the live price data every timeframe specified in the liveDelay in seconds. The method will also force an update at the beginning of every open to make sure the stock
-     * is up to date
+     * is up-to-date
      * @param liveDelayS
      */
-    public void updateLivePriceData(double liveDelayS) {
+    public void updateLivePrice(double liveDelayS) {
         updateTimer.start();
         if (updateTimer.hasTimePassedS(liveDelayS) || shouldClose()) {
             doLivePriceUpdate.run(() -> {
-                updateLivePriceData();
+                updateLivePrice();
                 updateTimer.restart();
             });
         }
@@ -146,7 +147,7 @@ public class Stock {
     /**
      * Sets the stock's open, min, and max to the current price value only when doOpen is set to reset
      */
-    public void updateOpen() {
+    private void updateOpen() {
         this.doOpen.run(() -> {
             this.openTime = StockUtil.getAdjustedCurrentTime();
             setAllData(getPrice());
@@ -157,7 +158,7 @@ public class Stock {
     /**
      * Updates the splitting of the stock into candles based on the TimeFrame of the stock selected. This method adds an entry to the historical data HashMap and then resets the livedata to the current price
      */
-    public void updateClose() {
+    private void updateClose() {
         if (!shouldClose()) {
             doClose.reset();
             return;
@@ -167,7 +168,7 @@ public class Stock {
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
             DateTime previousOpen = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
-            if (getPrice() != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
+            if (getOpen() != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
 
             //Set stock ready for open
             setAllData(getPrice());
@@ -179,7 +180,7 @@ public class Stock {
     /**
      * Updates the percentage complete for the current stock candle
      */
-    public void updateClosePercent() {
+    private void updateClosePercent() {
         DateTime ct = StockUtil.getAdjustedCurrentTime();
         double totalPercent = 0;
 
@@ -236,7 +237,7 @@ public class Stock {
      * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
      * @param value
      */
-    public void setAllData(float value) {
+    private void setAllData(float value) {
         this.price = value;
         this.open = value;
         this.min = value;
@@ -270,8 +271,8 @@ public class Stock {
      */
     public boolean shouldUpdate() {
         //Wait until the start of the candle timeframe to allow updates
-        if (shouldClose()) setUpdatesStarted(true);
-        if (!shouldStartUpdates()) return false;
+        if (shouldClose()) this.shouldStartUpdates = true;
+        if (!this.shouldStartUpdates) return false;
 
         //Only allows for data collection during trading hours
         return StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime());
@@ -299,12 +300,6 @@ public class Stock {
             case FOUR_HOUR -> ct.getHourInt() % 4 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
             case ONE_DAY -> ct.getHourInt() % 8 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
         };
-    }
-
-
-    @SuppressWarnings("All")
-    private void setUpdatesStarted(boolean shouldStart) {
-        this.shouldStartUpdates = shouldStart;
     }
 
     public void setLivePriceSource(PriceSource livePriceSource) {
@@ -377,20 +372,12 @@ public class Stock {
     }
 
 
-    /**
-     * Retrieves the percentage from the open time to the close time. This is mainly used in the progress bar
-     * @return
-     */
     public Container<Double> getClosePercent() {
         return closePercent;
     }
 
     public DateTime getOpenTime() {
         return openTime;
-    }
-
-    private boolean shouldStartUpdates() {
-        return shouldStartUpdates;
     }
 
     public PriceSource getLivePriceSource() {

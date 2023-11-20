@@ -110,7 +110,7 @@ public class LiveDownloadScene extends Scene {
         dateTime.setText(String.valueOf(StockUtil.getAdjustedCurrentTime()));
 
         //Update all stock data
-        stock.updateData(0.5);
+        stock.updateLiveData(0.5);
 
         //Save stored data every minute
         saveWatch.start();
