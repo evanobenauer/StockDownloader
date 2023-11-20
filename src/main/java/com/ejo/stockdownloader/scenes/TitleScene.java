@@ -135,8 +135,8 @@ public class TitleScene extends Scene {
             //Add Bouncing Squares
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
-                Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
-                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
+                //Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
+                //addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
