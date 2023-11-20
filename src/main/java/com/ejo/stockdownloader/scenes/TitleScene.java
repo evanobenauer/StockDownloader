@@ -292,7 +292,7 @@ public class TitleScene extends Scene {
 
             } else if (alphaVantageTime.get().equals("Range")) {
                 if (alphaVantageYearStart.get().length() == 4 && alphaVantageMonthStart.get().length() == 2 && alphaVantageYearEnd.get().length() == 4 && alphaVantageMonthEnd.get().length() == 2) {
-                    downloader.downloadGroup(Integer.parseInt(alphaVantageYearStart.get()), Integer.parseInt(alphaVantageMonthStart.get()), Integer.parseInt(alphaVantageYearEnd.get()), Integer.parseInt(alphaVantageMonthEnd.get()));
+                    downloader.download(Integer.parseInt(alphaVantageYearStart.get()), Integer.parseInt(alphaVantageMonthStart.get()), Integer.parseInt(alphaVantageYearEnd.get()), Integer.parseInt(alphaVantageMonthEnd.get()));
                 } else {
                     warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
                 }

@@ -10,8 +10,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 //Realtime intraday data from AlphaVantage is premium only
@@ -37,6 +36,22 @@ public class AlphaVantageDownloader extends APIDownloader {
         this.limitReached = false;
     }
 
+    private void downloadFile(String year, String month, String filePath, Container<Double> downloadProgress) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
+        downloadProgress.set(.25);
+        HttpResponse response = httpClient.execute(httpGet);
+        downloadProgress.set(.5);
+        FileManager.createFolderPath(filePath);
+
+        String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
+
+        FileOutputStream fos = new FileOutputStream(filePath + fileName);
+        downloadProgress.set(.75);
+        response.getEntity().writeTo(fos);
+        fos.close();
+    }
+
     public void download(String year, String month) {
         Thread thread = new Thread(() -> {
             try {
@@ -53,7 +68,7 @@ public class AlphaVantageDownloader extends APIDownloader {
         thread.start();
     }
 
-    public void downloadGroup(int startYear, int startMonth, int endYear, int endMonth) {
+    public void download(int startYear, int startMonth, int endYear, int endMonth) {
         Container<Integer> year = new Container<>(startYear);
         Container<Integer> month = new Container<>(startMonth);
 
@@ -83,8 +98,9 @@ public class AlphaVantageDownloader extends APIDownloader {
                         String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
                         FileManager.deleteFile(tempPath,lastFileName.replace(".csv","") + ".csv");
                         CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + newSuffix);
-                        CSVManager.clearDuplicates(mainPath,fileName.replace(suffix,"") + newSuffix);
+                        formatStockFile(mainPath,fileName.replace(suffix,"") + newSuffix);
                         FileManager.deleteFile(tempPath,"");
+
                         endDownloadContainers(false);
                         setLimitReached(true);
                         return;
@@ -111,7 +127,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                 }
 
                 CSVManager.combineFiles(tempPath,mainPath,fileName);
-                CSVManager.clearDuplicates(mainPath,fileName);
+                formatStockFile(mainPath,fileName);
                 FileManager.deleteFile(tempPath,"");
 
                 endDownloadContainers(true);
@@ -126,28 +142,87 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void downloadAll() {
-        downloadGroup(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
+        download(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
     }
 
-    //TODO: Have this download the last month, then combine to the All CSV
     public void updateAll() {
+        Thread thread = new Thread(() -> {
+            String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
+            String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+            try {
+                getDownloadProgress().set(0d);
+                FileManager.createFolderPath(tempPath);
 
+                //Copy _ALL.csv file to temp path. Put that code here
+
+                getDownloadProgress().set(.25);
+                downloadFile(StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth(), tempPath, new Container<>(0d));
+                getDownloadProgress().set(.5);
+                CSVManager.combineFiles(tempPath, mainPath, getTicker() + "_" + getTimeFrame().getTag() + "_" + "UPDATED");
+                FileManager.deleteFile(tempPath, "");
+                endDownloadContainers(true);
+            } catch (Exception e) {
+                endDownloadContainers(false);
+                e.printStackTrace();
+            }
+        });
+        thread.setName("AlphaVantage Download Thread");
+        thread.setDaemon(false);
+        thread.start();
     }
 
-    private void downloadFile(String year, String month, String filePath, Container<Double> downloadProgress) throws IOException {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet httpGet = new HttpGet(getURL(year + "-" + month));
-        downloadProgress.set(.25);
-        HttpResponse response = httpClient.execute(httpGet);
-        downloadProgress.set(.5);
-        FileManager.createFolderPath(filePath);
+    private void formatStockFile(String directory, String name) {
+        CSVManager.clearDuplicates(directory,name);
+        // Remove Label, Order: ID, Open, Close, Min, Max, Volume
+        try {
+            String fileDirectory = directory + (directory.equals("") ? "" : "/");
+            String fileName = name.replace(".csv","");
+            FileReader reader = new FileReader(fileDirectory + fileName + ".csv");
+            BufferedReader br = new BufferedReader(reader);
+            FileWriter writer = new FileWriter(fileDirectory + fileName + "_temp" + ".csv");
 
-        String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year + "-" + month + ".csv";
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!line.contains("timestamp")) {
 
-        FileOutputStream fos = new FileOutputStream(filePath + fileName);
-        downloadProgress.set(.75);
-        response.getEntity().writeTo(fos);
-        fos.close();
+                    String[] lineArray = line.split(",");
+
+                    //Time Format
+                    String dateTime = lineArray[0];
+                    String[] date = dateTime.split(" ")[0].split("/");
+                    String[] time = dateTime.split(" ")[1].split(":");
+                    String year = date[2];
+                    String month = (Integer.parseInt(date[0]) < 10) ? "0" + date[0] : date[0];
+                    String day = (Integer.parseInt(date[1]) < 10) ? "0" + date[1] : date[1];
+                    String hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
+                    String minute = time[1];
+                    String second = "00";
+                    long dateTimeID = Long.parseLong(year + month + day + hour + minute + second);
+                    lineArray[0] = String.valueOf(dateTimeID);
+
+                    //Open,Close,Min,Max,Volume Format
+                    String max = lineArray[2];
+                    String close = lineArray[4];
+                    lineArray[2] = close;
+                    lineArray[4] = max;
+
+                    String newLine = "";
+                    for (int i = 0; i < lineArray.length; i++) {
+                        newLine = newLine.concat(lineArray[i]);
+                        if (i != lineArray.length - 1) newLine = newLine.concat(",");
+                    }
+                    writer.append(newLine);
+                    writer.append("\n");
+                }
+            }
+            writer.flush();
+            writer.close();
+            reader.close();
+            FileManager.deleteFile(directory, fileName + ".csv");
+            FileManager.renameFile(directory, fileName + "_temp" + ".csv", fileName + ".csv");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private String getMonthString(int month) {
