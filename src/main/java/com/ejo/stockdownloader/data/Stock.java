@@ -75,19 +75,15 @@ public class Stock {
      * Initiates the live price data from the stock
      */
     private void initLivePriceData() {
-        try {
-            setLivePrice();
-            setAllData(getPrice());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        updateLivePrice();
+        setAllData(getPrice());
     }
 
     /**
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
      * **METHOD PROCESS: Waits... [Time to close: Updates the close, updates the price, updates the open], Waits...**
      */
-    public void updateLiveData(double liveDelayS) {
+    public void updateLiveData(double liveDelayS, boolean includePriceUpdate) {
         //Updates the progress bar of each segmentation
         if (StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime())) updateClosePercent();
 
@@ -101,24 +97,39 @@ public class Stock {
         updateClose();
 
         //Update live price every provided delay second or update the live price on the start of every open
-        updateLivePrice(liveDelayS);
+        if (includePriceUpdate) updateLivePrice(liveDelayS);
+
+        //Updates the minimum/maximum values of the stock price over the time frame
+        updateMinMax();
 
         //Update the Open of each segment
         //[If a force update every open is unwanted, remove the force update and add this inside the updateTimer after the updateLivePriceData()]
         updateOpen();
     }
 
+    public void updateLiveData() {
+        updateLiveData(0,false);
+    }
+
 
     /**
-     * Retrieves and sets the live price data gathered for the stock. The minimum and maximum are set as well
-     * @throws IOException
+     * Retrieves and sets the live price data gathered for the stock from web scraping.
      */
     public void updateLivePrice() {
         try {
-            setLivePrice();
-            if (getOpen() == -1) return;
-            if (getPrice() < getMin()) this.min = getPrice();
-            if (getPrice() > getMax()) this.max = getPrice();
+            float livePrice;
+            switch (getLivePriceSource()) {
+                case MARKETWATCH -> {
+                    String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
+                    livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+                }
+                case YAHOOFINANCE -> {
+                    String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
+                    livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
+                }
+                default -> livePrice = -1;
+            }
+            if (livePrice != -1) this.price = livePrice;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,15 +138,16 @@ public class Stock {
 
     /**
      * Updates the live price data every timeframe specified in the liveDelay in seconds. The method will also force an update at the beginning of every open to make sure the stock
-     * is up-to-date
+     * is up-to-date.
+     * It is best to include this update in a parallel thread as the price scraping from the internet may cause lag
      * @param liveDelayS
      */
     public void updateLivePrice(double liveDelayS) {
         updateTimer.start();
         if (updateTimer.hasTimePassedS(liveDelayS) || shouldClose()) {
             doLivePriceUpdate.run(() -> {
-                updateLivePrice();
                 updateTimer.restart();
+                updateLivePrice();
             });
         }
 
@@ -178,6 +190,16 @@ public class Stock {
 
 
     /**
+     * Updates the minimum/maximum values of the stock over the time frame period. This is reset upon open
+     */
+    private void updateMinMax() {
+        if (getOpen() == -1) return;
+        if (getPrice() < getMin()) this.min = getPrice();
+        if (getPrice() > getMax()) this.max = getPrice();
+    }
+
+
+    /**
      * Updates the percentage complete for the current stock candle
      */
     private void updateClosePercent() {
@@ -205,7 +227,7 @@ public class Stock {
      * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
      * @return
      */
-    private HashMap<Long,String[]> loadHistoricalData() {
+    public HashMap<Long,String[]> loadHistoricalData() {
         try {
             HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV("stock_data", getTicker() + "_" + getTimeFrame().getTag());
 
@@ -231,38 +253,6 @@ public class Stock {
      */
     public boolean saveHistoricalData() {
         return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
-    }
-
-    /**
-     * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
-     * @param value
-     */
-    private void setAllData(float value) {
-        this.price = value;
-        this.open = value;
-        this.min = value;
-        this.max = value;
-    }
-
-    /**
-     * Sets the live price data from web scraping different websites depending on the live price source.
-     * These websites can be chosen upon stock object instantiation or set midway through the process
-     * @throws IOException
-     */
-    private void setLivePrice() throws IOException {
-        float livePrice;
-        switch (getLivePriceSource()) {
-            case MARKETWATCH -> {
-                String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
-                livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
-            }
-            case YAHOOFINANCE -> {
-                String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
-            }
-            default -> livePrice = -1;
-        }
-        if (livePrice != -1) this.price = livePrice;
     }
 
     /**
@@ -300,6 +290,17 @@ public class Stock {
             case FOUR_HOUR -> ct.getHourInt() % 4 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
             case ONE_DAY -> ct.getHourInt() % 8 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
         };
+    }
+
+    /**
+     * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
+     * @param value
+     */
+    private void setAllData(float value) {
+        this.price = value;
+        this.open = value;
+        this.min = value;
+        this.max = value;
     }
 
     public void setLivePriceSource(PriceSource livePriceSource) {

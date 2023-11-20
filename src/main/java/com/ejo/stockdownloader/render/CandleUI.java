@@ -1,6 +1,7 @@
 package com.ejo.stockdownloader.render;
 
 import com.ejo.glowlib.math.Vector;
+import com.ejo.glowlib.math.VectorMod;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowui.scene.Scene;
@@ -44,9 +45,10 @@ public class CandleUI extends ElementUI {
 
         //Wicks
         int colorOffset = 100;
+        Vector wickPos = getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0);
         ColorE wickColor = new ColorE(getColor().getRed() - colorOffset, getColor().getGreen() - colorOffset, getColor().getBlue() - colorOffset);
-        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, -(getStock().getMax(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY()), wickColor);
-        QuickDraw.drawRect(getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0),new Vector(wickWidth, (getStock().getOpen(getOpenTime()) - getStock().getMin(getOpenTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(wickPos,new Vector(wickWidth, -(getStock().getMax(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(wickPos,new Vector(wickWidth, (getStock().getOpen(getOpenTime()) - getStock().getMin(getOpenTime()))*getScale().getY()), wickColor);
 
         //Body
         QuickDraw.drawRect(getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
