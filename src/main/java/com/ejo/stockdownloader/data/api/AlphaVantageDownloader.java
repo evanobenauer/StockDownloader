@@ -99,7 +99,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                         String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
                         FileManager.deleteFile(tempPath,lastFileName.replace(".csv","") + ".csv");
                         CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + newSuffix);
-                        formatStockFile(mainPath,fileName.replace(suffix,"") + newSuffix);
+                        formatStockCSV(mainPath,fileName.replace(suffix,"") + newSuffix);
                         FileManager.deleteFile(tempPath,"");
 
                         endDownloadContainers(false);
@@ -128,7 +128,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                 }
 
                 CSVManager.combineFiles(tempPath,mainPath,fileName);
-                formatStockFile(mainPath,fileName);
+                formatStockCSV(mainPath,fileName);
                 FileManager.deleteFile(tempPath,"");
 
                 endDownloadContainers(true);
@@ -159,6 +159,8 @@ public class AlphaVantageDownloader extends APIDownloader {
                 getDownloadProgress().set(.25);
                 downloadFile(StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth(), tempPath, new Container<>(0d));
                 getDownloadProgress().set(.5);
+                formatStockCSV(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + StockUtil.getAdjustedCurrentTime().getYear() + "-" + StockUtil.getAdjustedCurrentTime().getMonth() + ".csv");
+                getDownloadProgress().set(.6);
                 CSVManager.combineFiles(tempPath, mainPath, getTicker() + "_" + getTimeFrame().getTag() + "_" + "UPDATED");
                 FileManager.deleteFile(tempPath, "");
                 endDownloadContainers(true);
@@ -172,7 +174,7 @@ public class AlphaVantageDownloader extends APIDownloader {
         thread.start();
     }
 
-    private void formatStockFile(String directory, String name) {
+    private void formatStockCSV(String directory, String name) {
         CSVManager.clearDuplicates(directory,name);
         // Remove Label, Order: ID, Open, Close, Min, Max, Volume
         try {
