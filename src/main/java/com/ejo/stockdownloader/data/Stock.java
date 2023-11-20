@@ -168,7 +168,7 @@ public class Stock {
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
             DateTime previousOpen = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
-            if (getOpen() != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
+            if (getOpen(previousOpen) != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
 
             //Set stock ready for open
             setAllData(getPrice());
