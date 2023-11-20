@@ -16,6 +16,7 @@ import java.util.ArrayList;
 //Realtime intraday data from AlphaVantage is premium only
 //There is now a 25 daily request limit for free keys
 //KEY: "H0JHAOU61I4MESDZ"
+//TODO: Maybe implement a key cycle script to make the limit not as daunting
 //https://www.alphavantage.co/documentation/
 public class AlphaVantageDownloader extends APIDownloader {
 
@@ -184,19 +185,38 @@ public class AlphaVantageDownloader extends APIDownloader {
             String line;
             while ((line = br.readLine()) != null) {
                 if (!line.contains("timestamp")) {
-
                     String[] lineArray = line.split(",");
-
                     //Time Format
                     String dateTime = lineArray[0];
-                    String[] date = dateTime.split(" ")[0].split("/");
-                    String[] time = dateTime.split(" ")[1].split(":");
-                    String year = date[2];
-                    String month = (Integer.parseInt(date[0]) < 10) ? "0" + date[0] : date[0];
-                    String day = (Integer.parseInt(date[1]) < 10) ? "0" + date[1] : date[1];
-                    String hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
-                    String minute = time[1];
-                    String second = "00";
+                    if (!dateTime.contains("/") && !dateTime.contains("-")) continue; //If the datetime is not formatted right, skip line
+
+                    String[] date;
+                    String[] time;
+                    String year;
+                    String month;
+                    String day;
+                    String hour;
+                    String minute;
+                    String second;
+                    if (dateTime.contains("/")) {
+                        date = dateTime.split(" ")[0].split("/");
+                        time = dateTime.split(" ")[1].split(":");
+                        year = date[2];
+                        month = (Integer.parseInt(date[0]) < 10) ? "0" + date[0] : date[0];
+                        day = (Integer.parseInt(date[1]) < 10) ? "0" + date[1] : date[1];
+                        hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
+                        minute = time[1];
+                        second = "00";
+                    } else {
+                        date = dateTime.split(" ")[0].split("-");
+                        time = dateTime.split(" ")[1].split(":");
+                        year = date[0];
+                        month = date[1];
+                        day = date[2];
+                        hour = time[0];
+                        minute = time[1];
+                        second = time[2];
+                    }
                     long dateTimeID = Long.parseLong(year + month + day + hour + minute + second);
                     lineArray[0] = String.valueOf(dateTimeID);
 
@@ -220,7 +240,7 @@ public class AlphaVantageDownloader extends APIDownloader {
             reader.close();
             FileManager.deleteFile(directory, fileName + ".csv");
             FileManager.renameFile(directory, fileName + "_temp" + ".csv", fileName + ".csv");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
