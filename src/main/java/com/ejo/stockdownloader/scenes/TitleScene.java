@@ -63,7 +63,7 @@ public class TitleScene extends Scene {
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15, 25), new Vector(110, 20), ColorE.BLUE, downloadMode, "Live Data", "API");
 
     private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours", new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), new ColorE(0, 200, 255, 255), liveExtendedHours);
-    private final ModeCycleUI<Stock.PriceSource> modeLivePriceSource = new ModeCycleUI<Stock.PriceSource>("Source",new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, Stock.PriceSource.MARKETWATCH, Stock.PriceSource.YAHOOFINANCE);
+    private final ModeCycleUI<Stock.PriceSource> modeLivePriceSource = new ModeCycleUI<>("Source",new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, Stock.PriceSource.MARKETWATCH, Stock.PriceSource.YAHOOFINANCE);
 
     private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15, modeDownloadMode.getPos().getY() + 80), new Vector(110, 20), ColorE.BLUE, api, "AlphaVantage");
     private final TextFieldUI fieldAlphaVantageKey = new TextFieldUI(new Vector(15, modeApi.getPos().getY() + 60), new Vector(110, 20), ColorE.WHITE, alphaVantageKey, "API Key", false);
@@ -135,7 +135,8 @@ public class TitleScene extends Scene {
             //Add Bouncing Squares
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
-                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(), random.nextInt(), random.nextInt(), 255)), 1, new Vector(random.nextDouble(-speed, speed), random.nextDouble(-speed, speed)), Vector.NULL));
+                Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
+                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
