@@ -174,7 +174,7 @@ public class AlphaVantageDownloader extends APIDownloader {
         thread.start();
     }
 
-    private void formatStockCSV(String directory, String name) {
+    public static void formatStockCSV(String directory, String name) {
         CSVManager.clearDuplicates(directory,name);
         // Remove Label, Order: ID, Open, Close, Min, Max, Volume
         try {
@@ -186,11 +186,15 @@ public class AlphaVantageDownloader extends APIDownloader {
 
             String line;
             while ((line = br.readLine()) != null) {
-                if (!line.contains("timestamp")) {
+                if (!line.contains("timestamp")) { //Removes all labels
                     String[] lineArray = line.split(",");
                     //Time Format
                     String dateTime = lineArray[0];
-                    if (!dateTime.contains("/") && !dateTime.contains("-")) continue; //If the datetime is not formatted right, skip line
+                    if (!dateTime.contains("/") && !dateTime.contains("-")) {//If the datetime is not a datetime, skip formatting the line
+                        writer.append(line);
+                        writer.append("\n");
+                        continue;
+                    }
 
                     String[] date;
                     String[] time;
