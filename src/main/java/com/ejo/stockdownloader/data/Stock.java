@@ -26,7 +26,7 @@ public class Stock {
     private PriceSource livePriceSource;
 
     //Historical Data HashMap
-    private HashMap<Long,String[]> dataHash = new HashMap<>();
+    private HashMap<Long, String[]> dataHash = new HashMap<>();
 
     //Open Time
     private DateTime openTime;
@@ -61,7 +61,7 @@ public class Stock {
 
         this.setAllData(-1);
         this.closePercent = new Container<>(0d);
-        this.openTime = new DateTime(0,0,0);
+        this.openTime = new DateTime(0, 0, 0);
         this.shouldStartUpdates = false;
 
         this.doFirstUpdate.reset();
@@ -71,13 +71,13 @@ public class Stock {
     }
 
     public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
-        this(ticker,timeFrame,extendedHours,livePriceSource,true);
+        this(ticker, timeFrame, extendedHours, livePriceSource, true);
     }
 
 
-        /**
-         * Initiates the live price data from the stock
-         */
+    /**
+     * Initiates the live price data from the stock
+     */
     private void initLivePriceData() {
         updateLivePrice();
         setAllData(getPrice());
@@ -89,7 +89,7 @@ public class Stock {
      */
     public void updateLiveData(double liveDelayS, boolean includePriceUpdate) {
         //Updates the progress bar of each segmentation
-        if (StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime())) updateClosePercent();
+        if (StockUtil.isPriceActive(isExtendedHours(), StockUtil.getAdjustedCurrentTime())) updateClosePercent();
 
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
@@ -112,7 +112,7 @@ public class Stock {
     }
 
     public void updateLiveData() {
-        updateLiveData(0,false);
+        updateLiveData(0, false);
     }
 
 
@@ -125,11 +125,11 @@ public class Stock {
             switch (getLivePriceSource()) {
                 case MARKETWATCH -> {
                     String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
-                    livePrice = StockUtil.getWebScrapePrice(url,"bg-quote.value",0);
+                    livePrice = StockUtil.getWebScrapePrice(url, "bg-quote.value", 0);
                 }
                 case YAHOOFINANCE -> {
                     String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                    livePrice = StockUtil.getWebScrapePrice(url2,"data-test","qsp-price",0);
+                    livePrice = StockUtil.getWebScrapePrice(url2, "data-test", "qsp-price", 0);
                 }
                 default -> livePrice = -1;
             }
@@ -144,6 +144,7 @@ public class Stock {
      * Updates the live price data every timeframe specified in the liveDelay in seconds. The method will also force an update at the beginning of every open to make sure the stock
      * is up-to-date.
      * It is best to include this update in a parallel thread as the price scraping from the internet may cause lag
+     *
      * @param liveDelayS
      */
     public void updateLivePrice(double liveDelayS) {
@@ -229,9 +230,10 @@ public class Stock {
 
     /**
      * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
+     *
      * @return
      */
-    public HashMap<Long,String[]> loadHistoricalData(String filePath, String fileName) {
+    public HashMap<Long, String[]> loadHistoricalData(String filePath, String fileName) {
         try {
             HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV(filePath, fileName);
 
@@ -250,13 +252,14 @@ public class Stock {
         }
     }
 
-    public HashMap<Long,String[]> loadHistoricalData() {
-        return loadHistoricalData("stock_data",getTicker() + "_" + getTimeFrame().getTag());
+    public HashMap<Long, String[]> loadHistoricalData() {
+        return loadHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
 
     /**
      * This method saves all historical data from the HashMap as a CSV file using GlowLib
+     *
      * @return
      */
     public boolean saveHistoricalData(String filePath, String fileName) {
@@ -269,6 +272,7 @@ public class Stock {
 
     /**
      * Checks if the stock should update live data. This method has the main purpose of stopping the update method if returned false
+     *
      * @return
      */
     public boolean shouldUpdate() {
@@ -277,7 +281,7 @@ public class Stock {
         if (!this.shouldStartUpdates) return false;
 
         //Only allows for data collection during trading hours
-        return StockUtil.isPriceActive(isExtendedHours(),StockUtil.getAdjustedCurrentTime());
+        return StockUtil.isPriceActive(isExtendedHours(), StockUtil.getAdjustedCurrentTime());
 
         //Finally, if all checks pass,
         //return true;
@@ -285,11 +289,12 @@ public class Stock {
 
     /**
      * This method will return true if the stock is at a place to go through with a split depending on the current TimeFrame
+     *
      * @return
      */
     public boolean shouldClose() {
         DateTime ct = StockUtil.getAdjustedCurrentTime();
-        return switch(getTimeFrame()) {
+        return switch (getTimeFrame()) {
             case ONE_SECOND -> true;
             case FIVE_SECONDS -> ct.getSecondInt() % 5 == 0;
             case THIRTY_SECONDS -> ct.getSecondInt() % 30 == 0;
@@ -306,6 +311,7 @@ public class Stock {
 
     /**
      * Sets all the data pertaining to the stock to a single value. This includes the price, open, min, and max
+     *
      * @param value
      */
     private void setAllData(float value) {
@@ -419,6 +425,7 @@ public class Stock {
         YAHOOFINANCE("YahooFinance");
 
         private final String string;
+
         PriceSource(String string) {
             this.string = string;
         }
