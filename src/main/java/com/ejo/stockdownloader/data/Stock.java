@@ -227,9 +227,9 @@ public class Stock {
      * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
      * @return
      */
-    public HashMap<Long,String[]> loadHistoricalData() {
+    public HashMap<Long,String[]> loadHistoricalData(String filePath, String fileName) {
         try {
-            HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV("stock_data", getTicker() + "_" + getTimeFrame().getTag());
+            HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV(filePath, fileName);
 
             HashMap<Long, String[]> convertedMap = new HashMap<>();
             for (String key : rawMap.keySet()) {
@@ -246,13 +246,21 @@ public class Stock {
         }
     }
 
+    public HashMap<Long,String[]> loadHistoricalData() {
+        return loadHistoricalData("stock_data",getTicker() + "_" + getTimeFrame().getTag());
+    }
+
 
     /**
      * This method saves all historical data from the HashMap as a CSV file using GlowLib
      * @return
      */
+    public boolean saveHistoricalData(String filePath, String fileName) {
+        return CSVManager.saveAsCSV(getHistoricalData(), filePath, fileName);
+    }
+
     public boolean saveHistoricalData() {
-        return CSVManager.saveAsCSV(getHistoricalData(), "stock_data", getTicker() + "_" + getTimeFrame().getTag());
+        return saveHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
     /**
