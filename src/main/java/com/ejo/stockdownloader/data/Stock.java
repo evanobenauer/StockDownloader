@@ -51,13 +51,13 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource, boolean loadOnInstantiation) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
         this.livePriceSource = livePriceSource;
 
-        this.dataHash = loadHistoricalData(); //TODO: Make this into a thread as to not slow down applications. Make sure to add progressbar data too
+        if (loadOnInstantiation) this.dataHash = loadHistoricalData();
 
         this.setAllData(-1);
         this.closePercent = new Container<>(0d);
@@ -70,10 +70,14 @@ public class Stock {
         this.doClose.reset();
     }
 
+    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
+        this(ticker,timeFrame,extendedHours,livePriceSource,true);
+    }
 
-    /**
-     * Initiates the live price data from the stock
-     */
+
+        /**
+         * Initiates the live price data from the stock
+         */
     private void initLivePriceData() {
         updateLivePrice();
         setAllData(getPrice());
