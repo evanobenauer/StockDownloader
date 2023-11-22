@@ -1,5 +1,6 @@
 package com.ejo.stockdownloader.scenes;
 
+import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.misc.DoOnce;
@@ -77,6 +78,24 @@ public class TitleScene extends Scene {
     private final TextFieldUI fieldAlphaVantageYearEnd = new TextFieldUI(new Vector(88, fieldAlphaVantageYearStart.getPos().getY() + yInc), new Vector(37, 20), ColorE.WHITE, alphaVantageYearEnd, "", true, 4);
     private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56, fieldAlphaVantageMonthStart.getPos().getY() + yInc), new Vector(22, 20), ColorE.WHITE, alphaVantageMonthEnd, "", true, 2);
 
+    private final ButtonUI buttonAlphaVantageCombineLive = new ButtonUI("Combine To Live",new Vector(15,fieldAlphaVantageYearEnd.getPos().getY() + yInc),new Vector(110,20),ColorE.BLUE, ButtonUI.MouseButton.ALL,() -> {
+        switch (api.get()) {
+            case "AlphaVantage" -> {
+                if (apiDownloader == null || !apiDownloader.isDownloadActive().get()) { //Run only if the api downloader has NOT been set OR if the downloader is NOT active
+
+                    //Set apiDownloader as the AlphaVantage downloader
+                    apiDownloader = new AlphaVantageDownloader(alphaVantageKey.getKey(), alphaVantagePremium.get(), stockTicker.get(), timeFrame.get(), alphaVantageExtendedHours.get());
+                    AlphaVantageDownloader downloader = (AlphaVantageDownloader) apiDownloader;
+                    downloader.combineToLiveFile();
+                }
+            }
+
+            case "OtherAPI???" -> {
+
+            }
+        }
+    });
+
     private final SideBarUI sideBarSettings = new SideBarUI("Settings", SideBarUI.Type.RIGHT, 140, false, new ColorE(0, 125, 200, 200),
             modeDownloadMode,
             toggleLiveExtendedHours,
@@ -91,7 +110,8 @@ public class TitleScene extends Scene {
             fieldAlphaVantageMonthStart,
             fieldAlphaVantageYearEnd,
             fieldAlphaVantageMonthEnd,
-            modeLivePriceSource
+            modeLivePriceSource,
+            buttonAlphaVantageCombineLive
     );
 
 
@@ -212,6 +232,7 @@ public class TitleScene extends Scene {
             fieldAlphaVantageYearStart.setEnabled(false);
             fieldAlphaVantageMonthEnd.setEnabled(false);
             fieldAlphaVantageYearEnd.setEnabled(false);
+            buttonAlphaVantageCombineLive.setEnabled(false);
 
         } else if (downloadMode.get().equals("API")) {
             QuickDraw.drawTextCentered("API:", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(0, 95), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
@@ -236,6 +257,7 @@ public class TitleScene extends Scene {
             fieldAlphaVantageYearStart.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
             fieldAlphaVantageMonthEnd.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
             fieldAlphaVantageYearEnd.setEnabled(alphaVantageTime.get().equals("Range") && api.get().equals("AlphaVantage"));
+            buttonAlphaVantageCombineLive.setEnabled(api.get().equals("AlphaVantage"));
 
             if (api.get().equals("AlphaVantage")) {
                 QuickDraw.drawTextCentered("Alpha Vantage Settings:", new Font("Arial", Font.PLAIN, 12), sideBarSettings.getPos().getAdded(0, 150), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);

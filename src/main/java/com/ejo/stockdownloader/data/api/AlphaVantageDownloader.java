@@ -12,6 +12,7 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 //Realtime intraday data from AlphaVantage is premium only
 //There is now a 25 daily request limit for free keys
@@ -30,9 +31,9 @@ public class AlphaVantageDownloader extends APIDownloader {
 
     private boolean limitReached;
 
-    private final String PATH_MAIN = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
-    private final String PATH_TEMP = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
-    private final String FILE_PREFIX = getTicker() + "_" + getTimeFrame().getTag();
+    public final String PATH_MAIN = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+    public final String PATH_TEMP = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
+    public final String FILE_PREFIX = getTicker() + "_" + getTimeFrame().getTag();
 
     public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, TimeFrame timeFrame, boolean extendedHours) {
         super(ticker, timeFrame, extendedHours);
@@ -88,7 +89,6 @@ public class AlphaVantageDownloader extends APIDownloader {
             initDownloadContainers();
             while (true) {
                 downloadFile(String.valueOf(year), getMonthString(month), PATH_TEMP, new Container<>(0d));
-
                 //Load the last file, check if error. If so, break and set limit reached
                 String lastFileName = FILE_PREFIX + "_" + year + "-" + getMonthString(month);
                 ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_TEMP, lastFileName);
@@ -243,6 +243,41 @@ public class AlphaVantageDownloader extends APIDownloader {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void combineToLiveFile() {
+        String liveFilePath = "stock_data/";
+        CSVManager.combineFiles(PATH_MAIN,liveFilePath,FILE_PREFIX + "_AV");
+        formatStockCSV(liveFilePath,FILE_PREFIX + "_AV");
+
+        try {
+            FileManager.createFolderPath(liveFilePath);
+            List<String> files = CSVManager.getCSVFilesInDirectory(liveFilePath);
+            FileWriter writer = new FileWriter(liveFilePath + FILE_PREFIX + "_temp.csv");
+
+            for (String file : files) {
+                if (file.contains(FILE_PREFIX)) {
+
+                    FileReader fileReader = new FileReader(liveFilePath + "/" + file);
+                    BufferedReader reader = new BufferedReader(fileReader);
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        writer.append(line);
+                        writer.append("\n");
+                    }
+                    reader.close();
+                    fileReader.close();
+                    FileManager.deleteFile(liveFilePath, file);
+                }
+            }
+            writer.flush();
+            writer.close();
+            FileManager.renameFile(liveFilePath, FILE_PREFIX + "_temp.csv", FILE_PREFIX + ".csv");
+        } catch (IOException e) {
+            System.out.println("Could not combine CSV Files");
+            e.printStackTrace();
+        }
+        CSVManager.clearDuplicates(liveFilePath,FILE_PREFIX + ".csv");
     }
 
     public static String getMonthString(int month) {
