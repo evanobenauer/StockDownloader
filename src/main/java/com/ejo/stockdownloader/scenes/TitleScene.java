@@ -29,6 +29,8 @@ import java.util.Random;
 
 public class TitleScene extends Scene {
 
+    //TODO: Create a "Combine All Data" button that combines and formats all files of that stock/timeframe into one csv
+
     private APIDownloader apiDownloader;
 
     //Main Data Settings
