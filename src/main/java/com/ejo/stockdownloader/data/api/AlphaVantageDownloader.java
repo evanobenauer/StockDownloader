@@ -31,7 +31,7 @@ public class AlphaVantageDownloader extends APIDownloader {
     private boolean limitReached;
 
     public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, TimeFrame timeFrame, boolean extendedHours) {
-        super(ticker,timeFrame,extendedHours);
+        super(ticker, timeFrame, extendedHours);
         this.apiKey = apiKey;
         this.premium = premium;
         this.limitReached = false;
@@ -54,19 +54,14 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void download(String year, String month) {
-        Thread thread = new Thread(() -> {
-            try {
-                initDownloadContainers();
-                downloadFile(year,month,"stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/",getDownloadProgress());
-                endDownloadContainers(true);
-            } catch (IOException e) {
-                endDownloadContainers(false);
-                e.printStackTrace();
-            }
-        });
-        thread.setName("AlphaVantage Download Thread");
-        thread.setDaemon(false);
-        thread.start();
+        try {
+            initDownloadContainers();
+            downloadFile(year, month, "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/", getDownloadProgress());
+            endDownloadContainers(true);
+        } catch (IOException e) {
+            endDownloadContainers(false);
+            e.printStackTrace();
+        }
     }
 
     public void download(int startYear, int startMonth, int endYear, int endMonth) {
@@ -86,60 +81,55 @@ public class AlphaVantageDownloader extends APIDownloader {
         String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
         String fileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + suffix;
 
-        Thread thread = new Thread(() -> {
-            try {
-                initDownloadContainers();
-                while (true) {
-                    downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
+        try {
+            initDownloadContainers();
+            while (true) {
+                downloadFile(String.valueOf(year.get()), getMonthString(month.get()), tempPath, new Container<>(0d));
 
-                    //Load the last file, check if error. If so, break and set limit reached
-                    String lastFileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get());
-                    ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath,lastFileName);
-                    if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
-                        String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
-                        FileManager.deleteFile(tempPath,lastFileName.replace(".csv","") + ".csv");
-                        CSVManager.combineFiles(tempPath,mainPath,fileName.replace(suffix,"") + newSuffix);
-                        formatStockCSV(mainPath,fileName.replace(suffix,"") + newSuffix);
-                        FileManager.deleteFile(tempPath,"");
+                //Load the last file, check if error. If so, break and set limit reached
+                String lastFileName = getTicker() + "_" + getTimeFrame().getTag() + "_" + year.get() + "-" + getMonthString(month.get());
+                ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(tempPath, lastFileName);
+                if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
+                    String newSuffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(month.get()) + "-" + year.get();
+                    FileManager.deleteFile(tempPath, lastFileName.replace(".csv", "") + ".csv");
+                    CSVManager.combineFiles(tempPath, mainPath, fileName.replace(suffix, "") + newSuffix);
+                    formatStockCSV(mainPath, fileName.replace(suffix, "") + newSuffix);
+                    FileManager.deleteFile(tempPath, "");
 
-                        endDownloadContainers(false);
-                        setLimitReached(true);
-                        return;
-                    }
-
-                    double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
-                    double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / (yearDiff + 1);
-                    setDownloadProgress(yearPercent + monthPercent);
-
-                    if (year.get() == endYear && month.get() == endMonth) break;
-
-                    if (month.get() != 12) {
-                        month.set(month.get() + 1);
-                    } else {
-                        month.set(1);
-                        year.set(year.get() + 1);
-                    }
-
-                    minuteCount.set(minuteCount.get() + 1);
-                    if (minuteCount.get() == maxRequestsPerMinute) {
-                        if (!isPremium()) Thread.sleep(61 * 1000);
-                        minuteCount.set(0);
-                    }
+                    endDownloadContainers(false);
+                    setLimitReached(true);
+                    return;
                 }
 
-                CSVManager.combineFiles(tempPath,mainPath,fileName);
-                formatStockCSV(mainPath,fileName);
-                FileManager.deleteFile(tempPath,"");
+                double yearPercent = (double) (year.get() - startYear) / (yearDiff + 1);
+                double monthPercent = ((year.get() == endYear) ? (double) month.get() / monthDiff : (double) month.get() / 12) / (yearDiff + 1);
+                setDownloadProgress(yearPercent + monthPercent);
 
-                endDownloadContainers(true);
-            } catch (Exception e) {
-                endDownloadContainers(false);
-                e.printStackTrace();
+                if (year.get() == endYear && month.get() == endMonth) break;
+
+                if (month.get() != 12) {
+                    month.set(month.get() + 1);
+                } else {
+                    month.set(1);
+                    year.set(year.get() + 1);
+                }
+
+                minuteCount.set(minuteCount.get() + 1);
+                if (minuteCount.get() == maxRequestsPerMinute) {
+                    if (!isPremium()) Thread.sleep(61 * 1000);
+                    minuteCount.set(0);
+                }
             }
-        });
-        thread.setName("AlphaVantage Download Thread");
-        thread.setDaemon(true);
-        thread.start();
+
+            CSVManager.combineFiles(tempPath, mainPath, fileName);
+            formatStockCSV(mainPath, fileName);
+            FileManager.deleteFile(tempPath, "");
+
+            endDownloadContainers(true);
+        } catch (Exception e) {
+            endDownloadContainers(false);
+            e.printStackTrace();
+        }
     }
 
     public void downloadAll() {
@@ -147,39 +137,34 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void updateAll() {
-        Thread thread = new Thread(() -> {
-            String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
-            String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
-            try {
-                getDownloadProgress().set(0d);
-                FileManager.createFolderPath(tempPath);
+        String tempPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
+        String mainPath = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+        try {
+            getDownloadProgress().set(0d);
+            FileManager.createFolderPath(tempPath);
 
-                //Copy _ALL.csv file to temp path. Put that code here
+            //Copy _ALL.csv file to temp path. Put that code here
 
-                getDownloadProgress().set(.25);
-                downloadFile(StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth(), tempPath, new Container<>(0d));
-                getDownloadProgress().set(.5);
-                formatStockCSV(tempPath,getTicker() + "_" + getTimeFrame().getTag() + "_" + StockUtil.getAdjustedCurrentTime().getYear() + "-" + StockUtil.getAdjustedCurrentTime().getMonth() + ".csv");
-                getDownloadProgress().set(.6);
-                CSVManager.combineFiles(tempPath, mainPath, getTicker() + "_" + getTimeFrame().getTag() + "_" + "UPDATED");
-                FileManager.deleteFile(tempPath, "");
-                endDownloadContainers(true);
-            } catch (Exception e) {
-                endDownloadContainers(false);
-                e.printStackTrace();
-            }
-        });
-        thread.setName("AlphaVantage Download Thread");
-        thread.setDaemon(false);
-        thread.start();
+            getDownloadProgress().set(.25);
+            downloadFile(StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth(), tempPath, new Container<>(0d));
+            getDownloadProgress().set(.5);
+            formatStockCSV(tempPath, getTicker() + "_" + getTimeFrame().getTag() + "_" + StockUtil.getAdjustedCurrentTime().getYear() + "-" + StockUtil.getAdjustedCurrentTime().getMonth() + ".csv");
+            getDownloadProgress().set(.6);
+            CSVManager.combineFiles(tempPath, mainPath, getTicker() + "_" + getTimeFrame().getTag() + "_" + "UPDATED");
+            FileManager.deleteFile(tempPath, "");
+            endDownloadContainers(true);
+        } catch (Exception e) {
+            endDownloadContainers(false);
+            e.printStackTrace();
+        }
     }
 
     public static void formatStockCSV(String directory, String name) {
-        CSVManager.clearDuplicates(directory,name);
+        CSVManager.clearDuplicates(directory, name);
         // Remove Label, Order: ID, Open, Close, Min, Max, Volume
         try {
             String fileDirectory = directory + (directory.equals("") ? "" : "/");
-            String fileName = name.replace(".csv","");
+            String fileName = name.replace(".csv", "");
             FileReader reader = new FileReader(fileDirectory + fileName + ".csv");
             BufferedReader br = new BufferedReader(reader);
             FileWriter writer = new FileWriter(fileDirectory + fileName + "_temp" + ".csv");
@@ -271,7 +256,7 @@ public class AlphaVantageDownloader extends APIDownloader {
 
 
     private String getURL(String month) {
-        return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval="+getTimeFrame().getTag()+"&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
+        return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval=" + getTimeFrame().getTag() + "&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
     }
 
     private void setLimitReached(boolean limitReached) {

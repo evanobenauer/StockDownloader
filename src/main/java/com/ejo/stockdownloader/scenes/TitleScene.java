@@ -11,7 +11,6 @@ import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.scene.elements.ProgressBarUI;
 import com.ejo.glowui.scene.elements.SideBarUI;
 import com.ejo.glowui.scene.elements.TextUI;
-import com.ejo.glowui.scene.elements.shape.RectangleUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
@@ -23,7 +22,6 @@ import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
-import com.ejo.uiphysics.elements.PhysicsDraggableUI;
 import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
 import java.awt.*;
@@ -78,7 +76,21 @@ public class TitleScene extends Scene {
     private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56, fieldAlphaVantageMonthStart.getPos().getY() + yInc), new Vector(22, 20), ColorE.WHITE, alphaVantageMonthEnd, "", true, 2);
 
     private final SideBarUI sideBarSettings = new SideBarUI("Settings", SideBarUI.Type.RIGHT, 140, false, new ColorE(0, 125, 200, 200),
-            modeDownloadMode, toggleLiveExtendedHours, modeApi, fieldAlphaVantageKey, toggleAlphaVantagePremium, toggleAlphaVantageExtendedHours, modeAlphaVantageTime, fieldAlphaVantageYear, fieldAlphaVantageMonth, fieldAlphaVantageYearStart, fieldAlphaVantageMonthStart, fieldAlphaVantageYearEnd, fieldAlphaVantageMonthEnd,modeLivePriceSource);
+            modeDownloadMode,
+            toggleLiveExtendedHours,
+            modeApi,
+            fieldAlphaVantageKey,
+            toggleAlphaVantagePremium,
+            toggleAlphaVantageExtendedHours,
+            modeAlphaVantageTime,
+            fieldAlphaVantageYear,
+            fieldAlphaVantageMonth,
+            fieldAlphaVantageYearStart,
+            fieldAlphaVantageMonthStart,
+            fieldAlphaVantageYearEnd,
+            fieldAlphaVantageMonthEnd,
+            modeLivePriceSource
+    );
 
 
     //Center Elements
@@ -100,25 +112,27 @@ public class TitleScene extends Scene {
         System.out.println(SettingManager.getDefaultManager().saveAll() ? "Saved" : "Could Not Save");
         if (stockTickerField.getContainer().get().equals("")) return;
 
-        if (downloadMode.get().equals("Live Data")) {
-            getWindow().setScene(new LiveDownloadScene(new Stock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get(),livePriceSource.get())));
+        switch (downloadMode.get()) {
+            case "Live Data" -> getWindow().setScene(new LiveDownloadScene(new Stock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get(),livePriceSource.get())));
 
-        } else if (downloadMode.get().equals("API")) {
-            warningText.setText("");
-            progressBarApiDownload.setRendered(true);
+            case "API" -> {
+                warningText.setText("");
+                progressBarApiDownload.setRendered(true);
 
-            //API SPECIFIC CODE
-            if (api.get().equals("AlphaVantage")) runAlphaVantageDownload();
+                //API SPECIFIC CODE
+                switch (api.get()) {
+                    case "AlphaVantage" -> runAlphaVantageDownload();
+                    case "OtherAPI" -> System.out.println("Currently Unimplemented");
+                }
 
-            //SET WARNING TEXT IF A DOWNLOAD IS ACTIVE, BUT BUTTON IS CLICKED AGAIN
-            if (apiDownloader.isDownloadActive().get())
-                warningText.setText("Download Already In Progress!").setColor(ColorE.RED);
+                //SET WARNING TEXT IF A DOWNLOAD IS ACTIVE, BUT BUTTON IS CLICKED AGAIN
+                if (apiDownloader.isDownloadActive().get()) warningText.setText("Download Already In Progress!").setColor(ColorE.RED);
+            }
         }
     });
 
     //DoOnce Instantiation
     private final DoOnce doInit = new DoOnce();
-
 
     public TitleScene() {
         super("Title");
@@ -128,11 +142,10 @@ public class TitleScene extends Scene {
 
     private void initScene() {
         doInit.run(() -> {
-            //Set Window Not-Economic
             App.getWindow().setEconomic(false);
 
-            Random random = new Random();
             //Add Bouncing Squares
+            Random random = new Random();
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
                 //Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
@@ -151,33 +164,16 @@ public class TitleScene extends Scene {
     public void draw() {
         initScene();
 
-        //Draw Background
         drawBackground(new ColorE(50, 50, 50, 255));
 
         //Draw Widget Backgrounds
         QuickDraw.drawRect(stockTickerField.getPos(), stockTickerField.getSize(), new ColorE(100, 100, 100, 255));
         QuickDraw.drawRect(timeFrameMode.getPos(), timeFrameMode.getSize(), new ColorE(100, 100, 100, 255));
-        if (progressBarApiDownload.shouldRender())
-            QuickDraw.drawRect(progressBarApiDownload.getPos(), progressBarApiDownload.getSize(), new ColorE(100, 100, 100, 255));
+        if (progressBarApiDownload.shouldRender()) QuickDraw.drawRect(progressBarApiDownload.getPos(), progressBarApiDownload.getSize(), new ColorE(100, 100, 100, 255));
 
-        //Set Warning Text
-        if (apiDownloader != null && !apiDownloader.isDownloadActive().get() && apiDownloader.isDownloadFinished().get()) {
-            if (apiDownloader instanceof AlphaVantageDownloader avd) {
-                if (avd.isDownloadSuccessful().get()) {
-                    warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
-                } else {
-                    warningText.setText(avd.isLimitReached() ? "Error! Daily Download Limit Reached!\\n Successful Downloads Saved!" : "Download Failed!").setColor(ColorE.RED);
-                }
-            } else {
-                if (apiDownloader.isDownloadSuccessful().get()) {
-                    warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
-                } else {
-                    warningText.setText("Download Failed!").setColor(ColorE.RED);
-                }
-            }
-        }
+        updateWarningText();
 
-        updateWidgetPositions();
+        updateElementPositions();
         super.draw();
         drawSidebarData();
     }
@@ -192,32 +188,17 @@ public class TitleScene extends Scene {
         }
     }
 
-    private double step = 0;
-
-    private void updateWidgetPositions() {
-        double yOffset = -40;
-        //Set Floating Title
-        title.setPos(getSize().getMultiplied(.5d).getAdded(title.getSize().getMultiplied(-.5)).getAdded(0, yOffset));
-        title.setPos(title.getPos().getAdded(new Vector(0, Math.sin(step) * 8)));
-        step += 0.05;
-        if (step >= Math.PI * 2) step = 0;
-
-        //Set Widget Positions
-        stockTickerField.setPos(getSize().getMultiplied(.5d).getAdded(stockTickerField.getSize().getMultiplied(-.5)).getAdded(-stockTickerField.getSize().getX(), 140).getAdded(0, yOffset));
-        timeFrameMode.setPos(getSize().getMultiplied(.5d).getAdded(timeFrameMode.getSize().getMultiplied(-.5)).getAdded(+timeFrameMode.getSize().getX(), 140).getAdded(0, yOffset));
-        downloadButton.setPos(getSize().getMultiplied(.5d).getAdded(downloadButton.getSize().getMultiplied(-.5)).getAdded(0, title.getFont().getSize() + 30).getAdded(0, yOffset));
-        progressBarApiDownload.setPos(downloadButton.getPos().getAdded(0, 120));
-        warningText.setPos(getSize().getMultiplied(.5).getAdded(warningText.getSize().getMultiplied(-.5)).getAdded(0, 170));
-    }
 
     private void drawSidebarData() {
         QuickDraw.drawTextCentered("Download Mode:", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(0, 45), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
         modeDownloadMode.setPos(new Vector(modeDownloadMode.getPos().getX(), 55));
 
         if (downloadMode.get().equals("Live Data")) {
+            //Live Data Settings
             toggleLiveExtendedHours.setEnabled(true);
             modeLivePriceSource.setEnabled(true);
 
+            //API Settings
             modeApi.setEnabled(false);
             fieldAlphaVantageKey.setEnabled(false);
             toggleAlphaVantagePremium.setEnabled(false);
@@ -229,12 +210,18 @@ public class TitleScene extends Scene {
             fieldAlphaVantageYearStart.setEnabled(false);
             fieldAlphaVantageMonthEnd.setEnabled(false);
             fieldAlphaVantageYearEnd.setEnabled(false);
+
         } else if (downloadMode.get().equals("API")) {
+            QuickDraw.drawTextCentered("API:", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(0, 95), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
+
+            //Live Data Settings
             toggleLiveExtendedHours.setEnabled(false);
             modeLivePriceSource.setEnabled(false);
 
+            //API Settings
             modeApi.setEnabled(true);
 
+            //Alpha Vantage Settings
             fieldAlphaVantageKey.setEnabled(api.get().equals("AlphaVantage"));
             toggleAlphaVantagePremium.setEnabled(api.get().equals("AlphaVantage"));
             toggleAlphaVantageExtendedHours.setEnabled(api.get().equals("AlphaVantage"));
@@ -261,14 +248,49 @@ public class TitleScene extends Scene {
                     QuickDraw.drawText("/", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(fieldAlphaVantageMonthEnd.getPos()).getAdded(new Vector(fieldAlphaVantageMonth.getSize().getX() + 3, 0)), ColorE.WHITE);
                 }
             }
-
-            QuickDraw.drawTextCentered("API:", new Font("Arial", Font.PLAIN, 16), sideBarSettings.getPos().getAdded(0, 95), new Vector(sideBarSettings.getWidth(), 0), ColorE.WHITE);
         } else {
-            for (ElementUI element : sideBarSettings.getElementList()) {
-                element.setEnabled(false);
+            for (ElementUI element : sideBarSettings.getElementList()) element.setEnabled(false);
+        }
+    }
+
+
+    private double step = 0;
+
+    private void updateElementPositions() {
+        double yOffset = -40;
+
+        //Set Floating Title
+        title.setPos(getSize().getMultiplied(.5d).getAdded(title.getSize().getMultiplied(-.5)).getAdded(0, yOffset));
+        title.setPos(title.getPos().getAdded(new Vector(0, Math.sin(step) * 8)));
+        step += 0.05;
+        if (step >= Math.PI * 2) step = 0;
+
+        //Set Widget Positions
+        stockTickerField.setPos(getSize().getMultiplied(.5d).getAdded(stockTickerField.getSize().getMultiplied(-.5)).getAdded(-stockTickerField.getSize().getX(), 140).getAdded(0, yOffset));
+        timeFrameMode.setPos(getSize().getMultiplied(.5d).getAdded(timeFrameMode.getSize().getMultiplied(-.5)).getAdded(+timeFrameMode.getSize().getX(), 140).getAdded(0, yOffset));
+        downloadButton.setPos(getSize().getMultiplied(.5d).getAdded(downloadButton.getSize().getMultiplied(-.5)).getAdded(0, title.getFont().getSize() + 30).getAdded(0, yOffset));
+        progressBarApiDownload.setPos(downloadButton.getPos().getAdded(0, 120));
+        warningText.setPos(getSize().getMultiplied(.5).getAdded(warningText.getSize().getMultiplied(-.5)).getAdded(0, 170));
+    }
+
+    private void updateWarningText() {
+        if (apiDownloader != null && !apiDownloader.isDownloadActive().get() && apiDownloader.isDownloadFinished().get()) {
+            if (apiDownloader instanceof AlphaVantageDownloader avd) {
+                if (avd.isDownloadSuccessful().get()) {
+                    warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
+                } else {
+                    warningText.setText(avd.isLimitReached() ? "Error! Daily Download Limit Reached!\\n Successful Downloads Saved!" : "Download Failed!").setColor(ColorE.RED);
+                }
+            } else {
+                if (apiDownloader.isDownloadSuccessful().get()) {
+                    warningText.setText("Download Finished Successfully!").setColor(ColorE.GREEN);
+                } else {
+                    warningText.setText("Download Failed!").setColor(ColorE.RED);
+                }
             }
         }
     }
+
 
     private void runAlphaVantageDownload() {
         if (apiDownloader == null || !apiDownloader.isDownloadActive().get()) { //Run only if the api downloader has NOT been set OR if the downloader is NOT active
@@ -281,26 +303,35 @@ public class TitleScene extends Scene {
             progressBarApiDownload.setContainer(apiDownloader.getDownloadProgress());
 
             //Download data based on month mode
-            if (alphaVantageTime.get().equals("Month")) {
-                if (alphaVantageYear.get().length() == 4 && alphaVantageMonth.get().length() == 2) {
-                    downloader.download(alphaVantageYear.get(), alphaVantageMonth.get());
-                } else {
-                    warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
+            Thread thread = new Thread(() -> {
+                switch (alphaVantageTime.get()) {
+
+                    case "Month" -> {
+                        if (alphaVantageYear.get().length() == 4 && alphaVantageMonth.get().length() == 2) {
+                            downloader.download(alphaVantageYear.get(), alphaVantageMonth.get());
+                        } else {
+                            warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
+                        }
+                    }
+
+                    case "Range" -> {
+                        if (alphaVantageYearStart.get().length() == 4 && alphaVantageMonthStart.get().length() == 2 && alphaVantageYearEnd.get().length() == 4 && alphaVantageMonthEnd.get().length() == 2) {
+                            downloader.download(Integer.parseInt(alphaVantageYearStart.get()), Integer.parseInt(alphaVantageMonthStart.get()), Integer.parseInt(alphaVantageYearEnd.get()), Integer.parseInt(alphaVantageMonthEnd.get()));
+                        } else {
+                            warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
+                        }
+                    }
+
+                    case "All" -> downloader.downloadAll();
+
+                    case "Update" -> downloader.updateAll();
+
+                    default -> System.out.println("Nothing left here lol");
                 }
-
-            } else if (alphaVantageTime.get().equals("All")) {
-                downloader.downloadAll();
-
-            } else if (alphaVantageTime.get().equals("Range")) {
-                if (alphaVantageYearStart.get().length() == 4 && alphaVantageMonthStart.get().length() == 2 && alphaVantageYearEnd.get().length() == 4 && alphaVantageMonthEnd.get().length() == 2) {
-                    downloader.download(Integer.parseInt(alphaVantageYearStart.get()), Integer.parseInt(alphaVantageMonthStart.get()), Integer.parseInt(alphaVantageYearEnd.get()), Integer.parseInt(alphaVantageMonthEnd.get()));
-                } else {
-                    warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
-                }
-
-            } else {
-                System.out.println("Lol, Maybe ill add an update mode to only download the last month?");
-            }
+            });
+            thread.setName("AlphaVantage Download Thread");
+            thread.setDaemon(true);
+            thread.start();
         }
     }
 
