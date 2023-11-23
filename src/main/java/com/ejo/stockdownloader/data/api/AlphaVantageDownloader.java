@@ -230,8 +230,9 @@ public class AlphaVantageDownloader extends APIDownloader {
         }
     }
 
-    public void combineToLiveFile() {
+    public boolean combineToLiveFile() {
         String liveFilePath = "stock_data/";
+        FileManager.createFolderPath(PATH_MAIN);
         CSVManager.combineFiles(PATH_MAIN,liveFilePath,FILE_PREFIX + "_AV");
         formatStockCSV(liveFilePath,FILE_PREFIX + "_AV");
 
@@ -257,11 +258,13 @@ public class AlphaVantageDownloader extends APIDownloader {
             writer.flush();
             writer.close();
             FileManager.renameFile(liveFilePath, FILE_PREFIX + "_temp.csv", FILE_PREFIX + ".csv");
+            CSVManager.clearDuplicates(liveFilePath,FILE_PREFIX + ".csv");
+            return true;
         } catch (IOException e) {
             System.out.println("Could not combine CSV Files");
             e.printStackTrace();
+            return false;
         }
-        CSVManager.clearDuplicates(liveFilePath,FILE_PREFIX + ".csv");
     }
 
     public static String getMonthString(int month) {
