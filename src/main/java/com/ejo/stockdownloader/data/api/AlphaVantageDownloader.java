@@ -31,7 +31,7 @@ public class AlphaVantageDownloader extends APIDownloader {
 
     private boolean limitReached;
 
-    public final String PATH_MAIN = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag();
+    public final String PATH_MAIN = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/";
     public final String PATH_TEMP = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
     public final String FILE_PREFIX = getTicker() + "_" + getTimeFrame().getTag();
 
@@ -52,7 +52,7 @@ public class AlphaVantageDownloader extends APIDownloader {
 
         String fileName = FILE_PREFIX + "_" + year + "-" + month + ".csv";
 
-        FileOutputStream fos = new FileOutputStream(filePath + fileName);
+        FileOutputStream fos = new FileOutputStream(filePath + "/" + fileName);
         downloadProgress.set(.75);
         response.getEntity().writeTo(fos);
         fos.close();
@@ -62,6 +62,16 @@ public class AlphaVantageDownloader extends APIDownloader {
         try {
             initDownloadContainers();
             downloadFile(year, month, PATH_MAIN, getDownloadProgress());
+
+            //Load the last file, check if error. If so, break and set limit reached
+            ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
+            if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
+                FileManager.deleteFile(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
+                endDownloadContainers(false);
+                setLimitReached(true);
+                return;
+            }
+
             formatStockCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
             endDownloadContainers(true);
         } catch (IOException e) {
@@ -89,6 +99,7 @@ public class AlphaVantageDownloader extends APIDownloader {
             initDownloadContainers();
             while (true) {
                 downloadFile(String.valueOf(year), getMonthString(month), PATH_TEMP, new Container<>(0d));
+
                 //Load the last file, check if error. If so, break and set limit reached
                 String lastFileName = FILE_PREFIX + "_" + year + "-" + getMonthString(month);
                 ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_TEMP, lastFileName);
@@ -140,34 +151,6 @@ public class AlphaVantageDownloader extends APIDownloader {
         download(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
     }
 
-    /**
-     * Updates ONLY the last month of data and adds it to the ALL file located in the stock_data folder
-     */
-    public void updateAll() {
-        try {
-            getDownloadProgress().set(0d);
-            FileManager.createFolderPath(PATH_TEMP);
-
-            //TODO: Copy _ALL.csv file to temp path. Put that code here
-            getDownloadProgress().set(.25);
-
-            downloadFile(StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth(), PATH_TEMP, new Container<>(0d));
-            getDownloadProgress().set(.5);
-
-            formatStockCSV(PATH_TEMP, FILE_PREFIX + "_" + StockUtil.getAdjustedCurrentTime().getYear() + "-" + StockUtil.getAdjustedCurrentTime().getMonth());
-            getDownloadProgress().set(.6);
-
-            CSVManager.combineFiles(PATH_TEMP, PATH_MAIN, FILE_PREFIX + "_" + "UPDATED");
-            CSVManager.clearDuplicates(PATH_MAIN, FILE_PREFIX + "_" + "UPDATED");
-            FileManager.deleteFile(PATH_TEMP, "");
-
-            endDownloadContainers(true);
-        } catch (Exception e) {
-            endDownloadContainers(false);
-            e.printStackTrace();
-        }
-    }
-
     public static void formatStockCSV(String directory, String name) {
         CSVManager.clearDuplicates(directory, name);
         // Remove Label, Order: ID, Open, Close, Min, Max, Volume
@@ -181,10 +164,12 @@ public class AlphaVantageDownloader extends APIDownloader {
             String line;
             while ((line = br.readLine()) != null) {
                 if (!line.contains("timestamp")) { //Removes all labels
+                    if (line.contains("{") || line.contains("}") || line.contains("Alpha Vantage")) continue; //Remove AlphaVantage Error Lines
                     String[] lineArray = line.split(",");
+
                     //Time Format
                     String dateTime = lineArray[0];
-                    if (!dateTime.contains("/") && !dateTime.contains("-")) {//If the datetime is not a datetime, skip formatting the line
+                    if (!dateTime.contains("/") && !dateTime.contains("-")) {//If the datetime is not a formatted DateTime, skip the line
                         writer.append(line);
                         writer.append("\n");
                         continue;
@@ -256,8 +241,7 @@ public class AlphaVantageDownloader extends APIDownloader {
             FileWriter writer = new FileWriter(liveFilePath + FILE_PREFIX + "_temp.csv");
 
             for (String file : files) {
-                if (file.contains(FILE_PREFIX)) {
-
+                if (file.contains(FILE_PREFIX)) { //If a file is a part of SPY_1min
                     FileReader fileReader = new FileReader(liveFilePath + "/" + file);
                     BufferedReader reader = new BufferedReader(fileReader);
                     String line;

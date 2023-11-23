@@ -16,6 +16,7 @@ import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.ModeCycleUI;
 import com.ejo.glowui.scene.elements.widget.TextFieldUI;
 import com.ejo.glowui.scene.elements.widget.ToggleUI;
+import com.ejo.glowui.util.Util;
 import com.ejo.glowui.util.render.Fonts;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
@@ -30,7 +31,8 @@ import java.util.Random;
 
 public class TitleScene extends Scene {
 
-    //TODO: Create a "Combine All Data" button that combines and formats all files of that stock/timeframe into one csv
+    //TODO: Add Tooltip to Download button to talk about the AlphaVantage Limits
+    //TODO: Add Tooltip to Combine button to say what it does
 
     private APIDownloader apiDownloader;
 
@@ -55,7 +57,7 @@ public class TitleScene extends Scene {
     private final Setting<String> alphaVantageMonth = new Setting<>("month", "01");
     private final Setting<String> alphaVantageYearStart = new Setting<>("yearStart", "2000");
     private final Setting<String> alphaVantageMonthStart = new Setting<>("monthStart", "01");
-    private final Setting<String> alphaVantageYearEnd = new Setting<>("yearEnd", "2000");
+    private final Setting<String> alphaVantageYearEnd = new Setting<>("yearEnd", "2001");
     private final Setting<String> alphaVantageMonthEnd = new Setting<>("monthEnd", "01");
 
 
@@ -78,7 +80,7 @@ public class TitleScene extends Scene {
     private final TextFieldUI fieldAlphaVantageYearEnd = new TextFieldUI(new Vector(88, fieldAlphaVantageYearStart.getPos().getY() + yInc), new Vector(37, 20), ColorE.WHITE, alphaVantageYearEnd, "", true, 4);
     private final TextFieldUI fieldAlphaVantageMonthEnd = new TextFieldUI(new Vector(56, fieldAlphaVantageMonthStart.getPos().getY() + yInc), new Vector(22, 20), ColorE.WHITE, alphaVantageMonthEnd, "", true, 2);
 
-    private final ButtonUI buttonAlphaVantageCombineLive = new ButtonUI("Combine To Live",new Vector(15,fieldAlphaVantageYearEnd.getPos().getY() + yInc),new Vector(110,20),ColorE.BLUE, ButtonUI.MouseButton.ALL,() -> {
+    private final ButtonUI buttonAlphaVantageCombineLive = new ButtonUI("Combine To Live",new Vector(15,0),new Vector(110,20), new ColorE(0, 200, 255, 150), ButtonUI.MouseButton.ALL,() -> {
         switch (api.get()) {
             case "AlphaVantage" -> {
                 if (apiDownloader == null || !apiDownloader.isDownloadActive().get()) { //Run only if the api downloader has NOT been set OR if the downloader is NOT active
@@ -89,29 +91,26 @@ public class TitleScene extends Scene {
                     downloader.combineToLiveFile();
                 }
             }
-
-            case "OtherAPI???" -> {
-
-            }
+            case "OtherAPI???" -> System.out.println("None");
         }
     });
 
     private final SideBarUI sideBarSettings = new SideBarUI("Settings", SideBarUI.Type.RIGHT, 140, false, new ColorE(0, 125, 200, 200),
-            modeDownloadMode,
-            toggleLiveExtendedHours,
-            modeApi,
-            fieldAlphaVantageKey,
-            toggleAlphaVantagePremium,
-            toggleAlphaVantageExtendedHours,
-            modeAlphaVantageTime,
-            fieldAlphaVantageYear,
-            fieldAlphaVantageMonth,
-            fieldAlphaVantageYearStart,
-            fieldAlphaVantageMonthStart,
-            fieldAlphaVantageYearEnd,
-            fieldAlphaVantageMonthEnd,
-            modeLivePriceSource,
-            buttonAlphaVantageCombineLive
+            modeDownloadMode
+            ,toggleLiveExtendedHours
+            ,modeApi
+            ,fieldAlphaVantageKey
+            ,toggleAlphaVantagePremium
+            ,toggleAlphaVantageExtendedHours
+            ,modeAlphaVantageTime
+            ,fieldAlphaVantageYear
+            ,fieldAlphaVantageMonth
+            ,fieldAlphaVantageYearStart
+            ,fieldAlphaVantageMonthStart
+            ,fieldAlphaVantageYearEnd
+            ,fieldAlphaVantageMonthEnd
+            ,modeLivePriceSource
+            ,buttonAlphaVantageCombineLive
     );
 
 
@@ -295,6 +294,7 @@ public class TitleScene extends Scene {
         downloadButton.setPos(getSize().getMultiplied(.5d).getAdded(downloadButton.getSize().getMultiplied(-.5)).getAdded(0, title.getFont().getSize() + 30).getAdded(0, yOffset));
         progressBarApiDownload.setPos(downloadButton.getPos().getAdded(0, 120));
         warningText.setPos(getSize().getMultiplied(.5).getAdded(warningText.getSize().getMultiplied(-.5)).getAdded(0, 170));
+        buttonAlphaVantageCombineLive.setPos(new Vector(buttonAlphaVantageCombineLive.getPos().getX(),getSize().getY() - buttonAlphaVantageCombineLive.getSize().getY() - 15));
     }
 
     private void updateWarningText() {
@@ -347,8 +347,6 @@ public class TitleScene extends Scene {
                     }
 
                     case "All" -> downloader.downloadAll();
-
-                    case "Update" -> downloader.updateAll();
 
                     default -> System.out.println("Nothing left here lol");
                 }
