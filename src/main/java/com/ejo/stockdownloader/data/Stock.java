@@ -8,7 +8,11 @@ import com.ejo.glowlib.time.StopWatch;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 
 /**
@@ -33,6 +37,10 @@ public class Stock {
 
     //Open-Close Percentage
     private final Container<Double> closePercent;
+
+    //Progress Data
+    private final Container<Double> progressContainer = new Container<>(0d);
+    protected boolean progressActive = false;
 
     //Live Price Variables
     private float price;
@@ -218,16 +226,32 @@ public class Stock {
      * @return
      */
     public HashMap<Long, String[]> loadHistoricalData(String filePath, String fileName) {
+        this.progressActive = true;
         try {
-            HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV(filePath, fileName);
+            File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
+            HashMap<Long, String[]> rawMap = new HashMap<>();
 
-            HashMap<Long, String[]> convertedMap = new HashMap<>();
-            for (String key : rawMap.keySet()) convertedMap.put(Long.parseLong(key), rawMap.get(key));
-            return this.dataHash = convertedMap;
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                long fileSize = Files.lines(file.toPath()).count();
+                long currentRow = 0;
+                while ((line = reader.readLine()) != null) {
+                    String[] row = line.split(",");
+                    String key = row[0];
+                    String[] rowCut = line.replace(key + ",", "").split(",");
+                    rawMap.put(Long.parseLong(row[0]), rowCut);
+                    currentRow += 1;
+                    getProgressContainer().set((double) (currentRow / fileSize));
+                }
+            } catch (IOException | SecurityException e) {
+                e.printStackTrace();
+            }
+            return this.dataHash = rawMap;
         } catch (Exception e) {
             e.printStackTrace();
-            return new HashMap<>();
         }
+        this.progressActive = false;
+        return new HashMap<>();
     }
 
     public HashMap<Long, String[]> loadHistoricalData() {
@@ -375,6 +399,14 @@ public class Stock {
 
     public DateTime getOpenTime() {
         return openTime;
+    }
+
+    public Container<Double> getProgressContainer() {
+        return progressContainer;
+    }
+
+    public boolean isProgressActive() {
+        return progressActive;
     }
 
     public PriceSource getLivePriceSource() {
