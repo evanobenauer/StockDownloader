@@ -232,6 +232,7 @@ public class TitleScene extends Scene {
         switch (api.get()) {
             case "AlphaVantage" -> apiDownloader = new AlphaVantageDownloader(alphaVantageKey.getKey(), alphaVantagePremium.get(), stockTicker.get(), timeFrame.get(), alphaVantageExtendedHours.get());
             case "OtherAPI" -> System.out.println("Not Implemented"); //There are no other APIs currently
+            default -> apiDownloader = null;
         }
     }
 
