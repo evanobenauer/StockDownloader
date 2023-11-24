@@ -45,7 +45,6 @@ public class Stock {
     private final StopWatch updateTimer = new StopWatch();
 
     //Do Once Definitions
-    private final DoOnce doFirstUpdate = new DoOnce();
     private final DoOnce doLivePriceUpdate = new DoOnce();
     private final DoOnce doOpen = new DoOnce();
     private final DoOnce doClose = new DoOnce();
@@ -61,10 +60,8 @@ public class Stock {
 
         this.setAllData(-1);
         this.closePercent = new Container<>(0d);
-        this.openTime = new DateTime(0, 0, 0);
         this.shouldStartUpdates = false;
 
-        this.doFirstUpdate.reset();
         this.doLivePriceUpdate.reset();
         this.doOpen.reset();
         this.doClose.reset();
@@ -74,14 +71,6 @@ public class Stock {
         this(ticker, timeFrame, extendedHours, livePriceSource, true);
     }
 
-
-    /**
-     * Initiates the live price data from the stock
-     */
-    private void initLivePriceData() {
-        updateLivePrice();
-        setAllData(getPrice());
-    }
 
     /**
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
@@ -94,21 +83,17 @@ public class Stock {
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
 
-        //Set default values to the current price on the first update received
-        this.doFirstUpdate.run(this::initLivePriceData);
-
-        //Update the Close of each segment
+        //Close the previous segment
         updateClose();
 
         //Update live price every provided delay second or update the live price on the start of every open
         if (includePriceUpdate) updateLivePrice(liveDelayS);
 
+        //Open the next segment
+        updateOpen();
+
         //Updates the minimum/maximum values of the stock price over the time frame
         updateMinMax();
-
-        //Update the Open of each segment
-        //[If a force update every open is unwanted, remove the force update and add this inside the updateTimer after the updateLivePriceData()]
-        updateOpen();
     }
 
     public void updateLiveData() {
@@ -184,11 +169,10 @@ public class Stock {
             DateTime ct = StockUtil.getAdjustedCurrentTime();
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
-            DateTime previousOpen = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
-            if (getOpen(previousOpen) != -1) dataHash.put(previousOpen.getDateTimeID(), timeFrameData);
+            DateTime openTime = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
+            if (getOpenTime() != null) dataHash.put(openTime.getDateTimeID(), timeFrameData);
 
             //Set stock ready for open
-            setAllData(getPrice());
             doOpen.reset();
         });
     }
@@ -198,7 +182,7 @@ public class Stock {
      * Updates the minimum/maximum values of the stock over the time frame period. This is reset upon open
      */
     private void updateMinMax() {
-        if (getOpen() == -1) return;
+        if (getOpenTime() == null) return;
         if (getPrice() < getMin()) this.min = getPrice();
         if (getPrice() > getMax()) this.max = getPrice();
     }

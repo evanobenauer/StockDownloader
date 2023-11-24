@@ -12,6 +12,8 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 //Realtime intraday data from AlphaVantage is premium only
@@ -90,8 +92,7 @@ public class AlphaVantageDownloader extends APIDownloader {
         int maxRequestsPerMinute = 5;
         int minuteCount = 0;
 
-        boolean isAll = startYear == 2000 && startMonth == 1 && endYear == StockUtil.getAdjustedCurrentTime().getYearInt() && endMonth == StockUtil.getAdjustedCurrentTime().getMonthInt();
-        String suffix = isAll ? "ALL" : getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(endMonth) + "-" + endYear;
+        String suffix = getMonthString(startMonth) + "-" + startYear + "-" + getMonthString(endMonth) + "-" + endYear;
 
         String fileName = FILE_PREFIX + "_" + suffix;
 
@@ -152,77 +153,56 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public static void formatStockCSV(String directory, String name) {
-        CSVManager.clearDuplicates(directory, name);
         // Remove Label, Order: ID, Open, Close, Min, Max, Volume
+
+        HashSet<String> idList = new HashSet<>();
         try {
             String fileDirectory = directory + (directory.equals("") ? "" : "/");
             String fileName = name.replace(".csv", "");
-            FileReader reader = new FileReader(fileDirectory + fileName + ".csv");
-            BufferedReader br = new BufferedReader(reader);
-            FileWriter writer = new FileWriter(fileDirectory + fileName + "_temp" + ".csv");
+
+            FileReader fileReader = new FileReader(fileDirectory + fileName + ".csv");
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            FileWriter fileWriter = new FileWriter(fileDirectory + fileName + "_temp" + ".csv");
 
             String line;
-            while ((line = br.readLine()) != null) {
-                if (!line.contains("timestamp")) { //Removes all labels
-                    if (line.contains("{") || line.contains("}") || line.contains("Alpha Vantage")) continue; //Remove AlphaVantage Error Lines
-                    String[] lineArray = line.split(",");
+            while ((line = bufferedReader.readLine()) != null) {
+                if (line.contains("timestamp")) continue; //Removes all labels
+                if (line.contains("{") || line.contains("}") || line.contains("Alpha Vantage")) continue; //Remove AlphaVantage Error Lines
 
-                    //Time Format
-                    String dateTime = lineArray[0];
-                    if (!dateTime.contains("/") && !dateTime.contains("-")) {//If the datetime is not a formatted DateTime, skip the line
-                        writer.append(line);
-                        writer.append("\n");
-                        continue;
-                    }
+                String[] lineArray = line.split(",");
 
-                    String[] date;
-                    String[] time;
-                    String year;
-                    String month;
-                    String day;
-                    String hour;
-                    String minute;
-                    String second;
-                    if (dateTime.contains("/")) {
-                        date = dateTime.split(" ")[0].split("/");
-                        time = dateTime.split(" ")[1].split(":");
-                        year = date[2];
-                        month = (Integer.parseInt(date[0]) < 10) ? "0" + date[0] : date[0];
-                        day = (Integer.parseInt(date[1]) < 10) ? "0" + date[1] : date[1];
-                        hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
-                        minute = time[1];
-                        second = "00";
-                    } else {
-                        date = dateTime.split(" ")[0].split("-");
-                        time = dateTime.split(" ")[1].split(":");
-                        year = date[0];
-                        month = date[1];
-                        day = date[2];
-                        hour = time[0];
-                        minute = time[1];
-                        second = time[2];
-                    }
-                    long dateTimeID = Long.parseLong(year + month + day + hour + minute + second);
-                    lineArray[0] = String.valueOf(dateTimeID);
+                //Time Format
+                String dateTime = lineArray[0];
 
-                    //Open,Close,Min,Max,Volume Format
-                    String max = lineArray[2];
-                    String close = lineArray[4];
-                    lineArray[2] = close;
-                    lineArray[4] = max;
+                if (!idList.add(dateTime)) continue; //Clear values with repeat dateTimes
 
-                    String newLine = "";
-                    for (int i = 0; i < lineArray.length; i++) {
-                        newLine = newLine.concat(lineArray[i]);
-                        if (i != lineArray.length - 1) newLine = newLine.concat(",");
-                    }
-                    writer.append(newLine);
-                    writer.append("\n");
+                if (!dateTime.contains("/") && !dateTime.contains("-")) {//If the datetime is not a formatted DateTime, skip the line
+                    fileWriter.append(line);
+                    fileWriter.append("\n");
+                    continue;
                 }
+
+                lineArray[0] = String.valueOf(getDateTimeIDFromAlphaVantageFormat(dateTime));
+
+                //Open,Close,Min,Max,Volume Format
+                String max = lineArray[2];
+                String close = lineArray[4];
+                lineArray[2] = close;
+                lineArray[4] = max;
+
+                String newLine = "";
+                for (int i = 0; i < lineArray.length; i++) {
+                    newLine = newLine.concat(lineArray[i]);
+                    if (i != lineArray.length - 1) newLine = newLine.concat(",");
+                }
+                fileWriter.append(newLine);
+                fileWriter.append("\n");
             }
-            writer.flush();
-            writer.close();
-            reader.close();
+
+            fileWriter.flush();
+
+            fileWriter.close();
+            fileReader.close();
             FileManager.deleteFile(directory, fileName + ".csv");
             FileManager.renameFile(directory, fileName + "_temp" + ".csv", fileName + ".csv");
         } catch (Exception e) {
@@ -230,35 +210,71 @@ public class AlphaVantageDownloader extends APIDownloader {
         }
     }
 
+    private static long getDateTimeIDFromAlphaVantageFormat(String dateTime) {
+        String[] date;
+        String[] time;
+        String year;
+        String month;
+        String day;
+        String hour;
+        String minute;
+        String second;
+        if (dateTime.contains("/")) {
+            date = dateTime.split(" ")[0].split("/");
+            time = dateTime.split(" ")[1].split(":");
+            year = date[2];
+            month = (Integer.parseInt(date[0]) < 10) ? "0" + date[0] : date[0];
+            day = (Integer.parseInt(date[1]) < 10) ? "0" + date[1] : date[1];
+            hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
+            minute = time[1];
+            second = "00";
+        } else {
+            date = dateTime.split(" ")[0].split("-");
+            time = dateTime.split(" ")[1].split(":");
+            year = date[0];
+            month = date[1];
+            day = date[2];
+            hour = time[0];
+            minute = time[1];
+            second = time[2];
+        }
+        return Long.parseLong(year + month + day + hour + minute + second);
+    }
+
     public boolean combineToLiveFile() {
         String liveFilePath = "stock_data/";
+        FileManager.createFolderPath(liveFilePath);
         FileManager.createFolderPath(PATH_MAIN);
         CSVManager.combineFiles(PATH_MAIN,liveFilePath,FILE_PREFIX + "_AV");
         formatStockCSV(liveFilePath,FILE_PREFIX + "_AV");
 
+        HashSet<String> idList = new HashSet<>();
         try {
-            FileManager.createFolderPath(liveFilePath);
-            List<String> files = CSVManager.getCSVFilesInDirectory(liveFilePath);
             FileWriter writer = new FileWriter(liveFilePath + FILE_PREFIX + "_temp.csv");
 
-            for (String file : files) {
-                if (file.contains(FILE_PREFIX)) { //If a file is a part of SPY_1min
+            ArrayList<String> fileNameList = new ArrayList<>(List.of(FILE_PREFIX + "_AV" + ".csv",FILE_PREFIX + ".csv"));
+
+            //For the live file and alpha vantage file. AlphaVantage comes FIRST, Live comes SECOND. This is to give priority to AV repeats
+            for (String file : fileNameList) {
+                try {
                     FileReader fileReader = new FileReader(liveFilePath + "/" + file);
-                    BufferedReader reader = new BufferedReader(fileReader);
+                    BufferedReader bufferedReader = new BufferedReader(fileReader);
                     String line;
-                    while ((line = reader.readLine()) != null) {
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (!idList.add(line.split(",")[0])) continue; //If the list already contains this dateTimeID, do not add a new one
                         writer.append(line);
                         writer.append("\n");
                     }
-                    reader.close();
+                    bufferedReader.close();
                     fileReader.close();
                     FileManager.deleteFile(liveFilePath, file);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
             }
             writer.flush();
             writer.close();
             FileManager.renameFile(liveFilePath, FILE_PREFIX + "_temp.csv", FILE_PREFIX + ".csv");
-            CSVManager.clearDuplicates(liveFilePath,FILE_PREFIX + ".csv");
             return true;
         } catch (IOException e) {
             System.out.println("Could not combine CSV Files");
@@ -267,8 +283,9 @@ public class AlphaVantageDownloader extends APIDownloader {
         }
     }
 
+
     public static String getMonthString(int month) {
-        if (month < 0 || month > 12) throw new IllegalStateException("Unexpected value: " + month);
+        if (month < 0 || month > 12) throw new IllegalStateException("Unexpected value: Month=" + month);
         return month < 10 ? "0" + month : String.valueOf(month);
     }
 

@@ -151,7 +151,7 @@ public class LiveDownloadScene extends Scene {
 
         //Draw Candles
         for (CandleUI candle : candleList) {
-            if (candle.getStock().getOpen(candle.getOpenTime()) != -1) {
+            if (candle.getStock().getOpenTime() != null) {
                 candle.draw();
                 candle.tick(scene); //Update Mouse Over
                 if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
@@ -160,7 +160,7 @@ public class LiveDownloadScene extends Scene {
 
         //Draw Tooltips
         for (CandleUI candle : candleList) {
-            if (candle.getStock().getOpen(candle.getOpenTime()) != -1) {
+            if (candle.getStock().getOpenTime() != null) {
                 candle.tick(scene); //Update Mouse Over
                 if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
             }
