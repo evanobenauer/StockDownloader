@@ -222,13 +222,7 @@ public class Stock {
             HashMap<String, String[]> rawMap = CSVManager.getHMDataFromCSV(filePath, fileName);
 
             HashMap<Long, String[]> convertedMap = new HashMap<>();
-            for (String key : rawMap.keySet()) {
-                if (isExtendedHours()) {
-                    convertedMap.put(Long.parseLong(key), rawMap.get(key));
-                } else if (StockUtil.isTradingHours(new DateTime(Long.parseLong(key)))) {
-                    convertedMap.put(Long.parseLong(key), rawMap.get(key));
-                }
-            }
+            for (String key : rawMap.keySet()) convertedMap.put(Long.parseLong(key), rawMap.get(key));
             return this.dataHash = convertedMap;
         } catch (Exception e) {
             e.printStackTrace();
