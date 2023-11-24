@@ -154,7 +154,6 @@ public class LiveDownloadScene extends Scene {
             if (candle.getStock().getOpenTime() != null) {
                 candle.draw();
                 candle.tick(scene); //Update Mouse Over
-                if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
             }
         }
 
