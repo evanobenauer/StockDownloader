@@ -20,6 +20,7 @@ import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.uiphysics.elements.PhysicsDraggableUI;
 import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
 import java.awt.*;
@@ -152,8 +153,8 @@ public class TitleScene extends Scene {
             Random random = new Random();
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
-                //Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
-                //addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
+                Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
+                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
