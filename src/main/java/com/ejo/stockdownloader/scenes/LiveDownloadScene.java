@@ -4,7 +4,6 @@ import com.ejo.glowlib.math.MathE;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.setting.Container;
-import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ProgressBarUI;
@@ -16,12 +15,11 @@ import com.ejo.glowui.util.Util;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
-import com.ejo.stockdownloader.util.StockDrawUtil;
+import com.ejo.stockdownloader.util.DrawUtil;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.render.CandleUI;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class LiveDownloadScene extends Scene {
 
@@ -72,7 +70,7 @@ public class LiveDownloadScene extends Scene {
             double focusY = getSize().getY() / 2;
             double focusPrice = stock.getPrice();
             Vector candleScale = new Vector(1, scaleY.get());
-            drawCandles(this,stock,focusPrice,focusY,candleSpace,candleWidth,candleScale);
+            DrawUtil.drawCandles(this,stock,StockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
 
             double linePriceBoxHeight = 15;
 
@@ -129,42 +127,6 @@ public class LiveDownloadScene extends Scene {
         } else {
             forceFrameWatch.stop();
         }
-    }
-
-
-    private void drawCandles(Scene scene, Stock stock, double focusPrice, double focusY, double candleSpace, double candleWidth, Vector candleScale) {
-        //Define Candle List
-        ArrayList<CandleUI> candleList = new ArrayList<>();
-
-        //Create Live Candle
-        CandleUI liveCandle = new CandleUI(stock, getSize().getX() - candleWidth - candleSpace, focusY, focusPrice, candleWidth, candleScale);
-        candleList.add(liveCandle);
-
-        //Create Historical Candles
-        DateTime ot = stock.getOpenTime();
-        int candleAmount = (int) (getSize().getX() / 18) + 1;
-        for (int i = 1; i < candleAmount; i++) {
-            DateTime candleTime = new DateTime(ot.getYearInt(), ot.getMonthInt(), ot.getDayInt(), ot.getHourInt(), ot.getMinuteInt(), ot.getSecondInt() - stock.getTimeFrame().getSeconds() * i);
-            CandleUI historicalCandle = new CandleUI(stock, candleTime, liveCandle.getPos().getX() - (candleSpace + candleWidth) * i, focusY, focusPrice, candleWidth, candleScale);
-            candleList.add(historicalCandle);
-        }
-
-        //Draw Candles
-        for (CandleUI candle : candleList) {
-            if (candle.getStock().getOpenTime() != null) {
-                candle.draw();
-                candle.tick(scene); //Update Mouse Over
-            }
-        }
-
-        //Draw Tooltips
-        for (CandleUI candle : candleList) {
-            if (candle.getStock().getOpenTime() != null) {
-                candle.tick(scene); //Update Mouse Over
-                if (candle.isMouseOver()) StockDrawUtil.drawCandleTooltip(candle, getWindow().getScaledMousePos());
-            }
-        }
-
     }
 
     private void drawPriceLine(double value, double y, double boxHeight, ColorE color) {

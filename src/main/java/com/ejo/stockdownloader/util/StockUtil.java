@@ -39,15 +39,15 @@ public class StockUtil {
     }
 
     public static boolean isTradingHours(DateTime currentTime) {
-        return !currentTime.isWeekend() && currentTime.getHourInt() < 16 && currentTime.getHourInt() >= 9 && (currentTime.getHourInt() != 9 || currentTime.getMinuteInt() >= 30);
+        return !currentTime.isWeekend() && currentTime.getHour() < 16 && currentTime.getHour() >= 9 && (currentTime.getHour() != 9 || currentTime.getMinute() >= 30);
     }
 
     public static boolean isPreMarket(DateTime currentTime) {
-        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHourInt() >= 4 && currentTime.getHourInt() < 10;
+        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHour() >= 4 && currentTime.getHour() < 10;
     }
 
     public static boolean isPostMarket(DateTime currentTime) {
-        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHourInt() >= 16 && currentTime.getHourInt() < 20;
+        return !isTradingHours(currentTime) && !currentTime.isWeekend() && currentTime.getHour() >= 16 && currentTime.getHour() < 20;
     }
 
     public static boolean isPriceActive(boolean extendedHours, DateTime currentTime) {
@@ -57,7 +57,7 @@ public class StockUtil {
 
     public static DateTime getAdjustedCurrentTime() {
         DateTime ct = DateTime.getCurrentDateTime();
-        return new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() + SECOND_ADJUST.get());
+        return new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() + SECOND_ADJUST.get());
     }
 
 }

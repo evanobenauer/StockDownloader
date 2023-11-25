@@ -16,7 +16,7 @@ project.ext.lwjglNatives = "natives-windows"
 
 dependencies {
     implementation 'com.github.evanobenauer:GlowUI:1.0.9b'
-    implementation 'com.github.evanobenauer:GlowLib:1.2.2'
+    implementation 'com.github.evanobenauer:GlowLib:baca014f37'
     implementation 'com.github.evanobenauer:UIPhysics:1.0.3'
 
     implementation 'org.jsoup:jsoup:1.16.2'

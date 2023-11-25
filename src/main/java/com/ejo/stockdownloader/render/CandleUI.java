@@ -41,7 +41,7 @@ public class CandleUI extends ElementUI {
 
     @Override
     public void drawElement(Scene scene, Vector mousePos) {
-        double wickWidth = getBodySize().getX()/6 * getScale().getX();
+        double wickWidth = getBodySize().getX()/6;
 
         //Wicks
         int colorOffset = 100;

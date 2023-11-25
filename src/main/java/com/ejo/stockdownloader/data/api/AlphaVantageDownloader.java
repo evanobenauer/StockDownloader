@@ -149,7 +149,7 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void downloadAll() {
-        download(2000, 1, StockUtil.getAdjustedCurrentTime().getYearInt(), StockUtil.getAdjustedCurrentTime().getMonthInt());
+        download(2000, 1, StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth());
     }
 
     public static void formatStockCSV(String directory, String name) {

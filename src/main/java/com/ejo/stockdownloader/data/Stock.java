@@ -177,7 +177,7 @@ public class Stock {
             DateTime ct = StockUtil.getAdjustedCurrentTime();
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
-            DateTime openTime = new DateTime(ct.getYearInt(), ct.getMonthInt(), ct.getDayInt(), ct.getHourInt(), ct.getMinuteInt(), ct.getSecondInt() - getTimeFrame().getSeconds());
+            DateTime openTime = new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() - getTimeFrame().getSeconds());
             if (getOpenTime() != null) dataHash.put(openTime.getDateTimeID(), timeFrameData);
 
             //Set stock ready for open
@@ -204,15 +204,15 @@ public class Stock {
         double totalPercent = 0;
 
         //Second Percent
-        double secPercent = (double) ct.getSecondInt() / getTimeFrame().getSeconds();
+        double secPercent = (double) ct.getSecond() / getTimeFrame().getSeconds();
         totalPercent += secPercent;
 
         //Minute Percent
-        double minPercent = ct.getMinuteInt() / ((double) getTimeFrame().getSeconds() / 60);
+        double minPercent = ct.getMinute() / ((double) getTimeFrame().getSeconds() / 60);
         totalPercent += minPercent;
 
         //Hour Percent
-        double hrPercent = ct.getHourInt() / ((double) getTimeFrame().getSeconds() / 60 / 60);
+        double hrPercent = ct.getHour() / ((double) getTimeFrame().getSeconds() / 60 / 60);
         totalPercent += hrPercent;
 
         totalPercent -= Math.floor(totalPercent);
@@ -298,16 +298,16 @@ public class Stock {
         DateTime ct = StockUtil.getAdjustedCurrentTime();
         return switch (getTimeFrame()) {
             case ONE_SECOND -> true;
-            case FIVE_SECONDS -> ct.getSecondInt() % 5 == 0;
-            case THIRTY_SECONDS -> ct.getSecondInt() % 30 == 0;
-            case ONE_MINUTE -> ct.getSecondInt() == 0;
-            case FIVE_MINUTES -> ct.getMinuteInt() % 5 == 0 && ct.getSecondInt() == 0;
-            case FIFTEEN_MINUTES -> ct.getMinuteInt() % 15 == 0 && ct.getSecondInt() == 0;
-            case THIRTY_MINUTES -> ct.getMinuteInt() % 30 == 0 && ct.getSecondInt() == 0;
-            case ONE_HOUR -> ct.getHourInt() == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
-            case TWO_HOUR -> ct.getHourInt() % 2 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
-            case FOUR_HOUR -> ct.getHourInt() % 4 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
-            case ONE_DAY -> ct.getHourInt() % 8 == 0 && ct.getMinuteInt() == 0 && ct.getSecondInt() == 0;
+            case FIVE_SECONDS -> ct.getSecond() % 5 == 0;
+            case THIRTY_SECONDS -> ct.getSecond() % 30 == 0;
+            case ONE_MINUTE -> ct.getSecond() == 0;
+            case FIVE_MINUTES -> ct.getMinute() % 5 == 0 && ct.getSecond() == 0;
+            case FIFTEEN_MINUTES -> ct.getMinute() % 15 == 0 && ct.getSecond() == 0;
+            case THIRTY_MINUTES -> ct.getMinute() % 30 == 0 && ct.getSecond() == 0;
+            case ONE_HOUR -> ct.getHour() == 0 && ct.getMinute() == 0 && ct.getSecond() == 0;
+            case TWO_HOUR -> ct.getHour() % 2 == 0 && ct.getMinute() == 0 && ct.getSecond() == 0;
+            case FOUR_HOUR -> ct.getHour() % 4 == 0 && ct.getMinute() == 0 && ct.getSecond() == 0;
+            case ONE_DAY -> ct.getHour() % 8 == 0 && ct.getMinute() == 0 && ct.getSecond() == 0;
         };
     }
 
