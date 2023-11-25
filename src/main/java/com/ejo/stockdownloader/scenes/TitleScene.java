@@ -20,8 +20,8 @@ import com.ejo.stockdownloader.data.Stock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
 import com.ejo.stockdownloader.util.TimeFrame;
-import com.ejo.uiphysics.elements.PhysicsDraggableUI;
-import com.ejo.uiphysics.elements.PhysicsObjectUI;
+//import com.ejo.uiphysics.elements.PhysicsDraggableUI;
+//import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
 import java.awt.*;
 import java.util.Random;
@@ -154,7 +154,7 @@ public class TitleScene extends Scene {
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
                 Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
-                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
+                //addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
@@ -189,7 +189,7 @@ public class TitleScene extends Scene {
 
         //Bounce Physics Squares
         for (ElementUI element : getElements()) {
-            if (element instanceof PhysicsObjectUI phys) doPhysicsBounce(phys);
+           // if (element instanceof PhysicsObjectUI phys) doPhysicsBounce(phys);
         }
     }
 
@@ -374,6 +374,7 @@ public class TitleScene extends Scene {
         }
     }
 
+    /*
     private void doPhysicsBounce(PhysicsObjectUI phys) {
         int size = 10;
         if (phys.getPos().getX() < 0) {
@@ -393,4 +394,6 @@ public class TitleScene extends Scene {
             phys.setVelocity(new Vector(phys.getVelocity().getX(), -phys.getVelocity().getY()));
         }
     }
+
+     */
 }
