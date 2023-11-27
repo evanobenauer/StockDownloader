@@ -55,13 +55,13 @@ public class DrawUtil {
         //Bound X Left
         if (x < 0) {
             x = 0;
-            mousePos = new Vector(60,mousePos.getY());
+            mousePos = new Vector(96,mousePos.getY());
         }
 
         //Bound Y Up
         if (y < 0) {
             y = 0;
-            mousePos = new Vector(mousePos.getX(),textSize * 4 + 5);
+            mousePos = new Vector(mousePos.getX(),textSize * 5 + 7);
         }
 
         //Round Data
