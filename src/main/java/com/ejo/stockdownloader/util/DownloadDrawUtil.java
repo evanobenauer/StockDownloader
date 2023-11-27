@@ -12,9 +12,11 @@ import com.ejo.stockdownloader.render.CandleUI;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class DrawUtil {
+public class DownloadDrawUtil {
 
-    public static void drawCandles(Scene scene, Stock stock, DateTime endTime, double focusPrice, double focusY, double separation, double candleWidth, Vector candleScale) {
+
+    public static void drawDownloadCandles(Scene scene, Stock stock, DateTime endTime, double focusPrice, double focusY, double separation, double candleWidth, Vector candleScale) {
+
         //Define Candle List
         ArrayList<CandleUI> listCandle = new ArrayList<>();
 
@@ -26,7 +28,7 @@ public class DrawUtil {
             for (int i = 0; i < candleAmount; i++) {
                 double x = scene.getSize().getX() - ((separation + candleWidth) * (i + 1)) * candleScale.getX();
                 DateTime candleTime = new DateTime(openTime.getYear(), openTime.getMonth(), openTime.getDay(), openTime.getHour(), openTime.getMinute(), openTime.getSecond() - stock.getTimeFrame().getSeconds() * i);
-                CandleUI historicalCandle = new CandleUI(stock, candleTime, x, focusY, focusPrice, candleWidth * candleScale.getX(), new Vector(1,candleScale.getY()));
+                CandleUI historicalCandle = new CandleUI(stock, candleTime, x, focusY, focusPrice, candleWidth * candleScale.getX(), new Vector(1, candleScale.getY()));
                 listCandle.add(historicalCandle);
             }
         } catch (NullPointerException e) {
@@ -46,6 +48,7 @@ public class DrawUtil {
         }
 
     }
+
     public static void drawCandleTooltip(CandleUI candle, Vector mousePos) {
         Stock stock = candle.getStock();
         int textSize = 10;
@@ -55,13 +58,13 @@ public class DrawUtil {
         //Bound X Left
         if (x < 0) {
             x = 0;
-            mousePos = new Vector(96,mousePos.getY());
+            mousePos = new Vector(96, mousePos.getY());
         }
 
         //Bound Y Up
         if (y < 0) {
             y = 0;
-            mousePos = new Vector(mousePos.getX(),textSize * 5 + 7);
+            mousePos = new Vector(mousePos.getX(), textSize * 5 + 7);
         }
 
         //Round Data
@@ -74,7 +77,7 @@ public class DrawUtil {
         QuickDraw.drawRect(new Vector(x - 2, y), new Vector(mousePos.getX() - x + 2, mousePos.getY() - y - 1), new ColorE(0, 125, 200, 200));
 
         //Draw Data
-        QuickDraw.drawText(candle.getOpenTime().toString(),new Font("Arial", Font.PLAIN, textSize),new Vector(x,y),ColorE.WHITE);
+        QuickDraw.drawText(candle.getOpenTime().toString(), new Font("Arial", Font.PLAIN, textSize), new Vector(x, y), ColorE.WHITE);
         QuickDraw.drawText("Open:" + open, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize), ColorE.WHITE);
         QuickDraw.drawText("Close:" + close, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize * 2), ColorE.WHITE);
         QuickDraw.drawText("Min:" + min, new Font("Arial", Font.PLAIN, textSize), new Vector(x, y + textSize * 3), ColorE.WHITE);

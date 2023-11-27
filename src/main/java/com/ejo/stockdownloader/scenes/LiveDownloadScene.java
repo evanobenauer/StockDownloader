@@ -15,7 +15,7 @@ import com.ejo.glowui.util.Util;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
 import com.ejo.stockdownloader.data.Stock;
-import com.ejo.stockdownloader.util.DrawUtil;
+import com.ejo.stockdownloader.util.DownloadDrawUtil;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.render.CandleUI;
 
@@ -70,7 +70,7 @@ public class LiveDownloadScene extends Scene {
             double focusY = getSize().getY() / 2;
             double focusPrice = stock.getPrice();
             Vector candleScale = new Vector(1, scaleY.get());
-            DrawUtil.drawCandles(this,stock,StockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
+            DownloadDrawUtil.drawDownloadCandles(this,stock,StockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
 
             double linePriceBoxHeight = 15;
 

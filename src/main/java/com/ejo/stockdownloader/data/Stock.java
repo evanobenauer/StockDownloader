@@ -265,7 +265,7 @@ public class Stock {
      * @return
      */
     public boolean saveHistoricalData(String filePath, String fileName) {
-        return CSVManager.saveAsCSV(getHistoricalData(), filePath, fileName);
+        return CSVManager.saveAsCSV(getHistoricalData(), filePath, fileName); //TODO: Add progress bar
     }
 
     public boolean saveHistoricalData() {
@@ -328,8 +328,17 @@ public class Stock {
     }
 
 
-    public float getPrice() {
-        return price;
+    /**
+     * Returns the raw data from the historical hashmap.
+     * This is in the format of: Open, Close, Min, Max, Volume
+     * @param dateTime
+     * @return
+     */
+    public float[] getData(DateTime dateTime) {
+        String[] rawData = getHistoricalData().get(dateTime.getDateTimeID());
+        if (rawData == null) return new float[]{-1,-1,-1,-1,-1};
+
+        return new float[]{Float.parseFloat(rawData[0]),Float.parseFloat(rawData[1]),Float.parseFloat(rawData[2]),Float.parseFloat(rawData[3])};
     }
 
     public float getOpen() {
@@ -337,27 +346,17 @@ public class Stock {
     }
 
     public float getOpen(DateTime dateTime) {
-        try {
-            if (dateTime == null || dateTime.equals(getOpenTime())) {
-                return getOpen();
-            } else {
-                return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[0]);
-            }
-        } catch (NullPointerException e) {
-            return -1;
-        }
+        if (dateTime.equals(getOpenTime())) return getOpen();
+        return getData(dateTime)[0];
+    }
+
+    public float getPrice() {
+        return price;
     }
 
     public float getClose(DateTime dateTime) {
-        try {
-            if (dateTime == null || dateTime.equals(getOpenTime())) {
-                return getPrice();
-            } else {
-                return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[1]);
-            }
-        } catch (NullPointerException e) {
-            return -1;
-        }
+        if (dateTime.equals(getOpenTime())) return getPrice();
+        return getData(dateTime)[1];
     }
 
     public float getMin() {
@@ -365,15 +364,8 @@ public class Stock {
     }
 
     public float getMin(DateTime dateTime) {
-        try {
-            if (dateTime == null || dateTime.equals(getOpenTime())) {
-                return getMin();
-            } else {
-                return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[2]);
-            }
-        } catch (NullPointerException e) {
-            return -1;
-        }
+        if (dateTime.equals(getOpenTime())) return getMin();
+        return getData(dateTime)[2];
     }
 
     public float getMax() {
@@ -381,15 +373,8 @@ public class Stock {
     }
 
     public float getMax(DateTime dateTime) {
-        try {
-            if (dateTime == null || dateTime.equals(getOpenTime())) {
-                return getMax();
-            } else {
-                return Float.parseFloat(getHistoricalData().get(dateTime.getDateTimeID())[3]);
-            }
-        } catch (NullPointerException e) {
-            return -1;
-        }
+        if (dateTime.equals(getOpenTime())) return getMax();
+        return getData(dateTime)[3];
     }
 
 

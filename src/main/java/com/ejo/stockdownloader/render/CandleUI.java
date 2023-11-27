@@ -1,5 +1,6 @@
 package com.ejo.stockdownloader.render;
 
+
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.math.VectorMod;
 import com.ejo.glowlib.misc.ColorE;
@@ -8,8 +9,13 @@ import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.data.Stock;
+import com.ejo.stockdownloader.util.StockUtil;
+
+import java.util.HashMap;
 
 public class CandleUI extends ElementUI {
+
+    private float[] data;
 
     private final Stock stock;
     private final DateTime dateTime;
@@ -22,7 +28,7 @@ public class CandleUI extends ElementUI {
 
     //Historical Candle
     public CandleUI(Stock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
-        super(Vector.NULL,true,true);
+        super(Vector.NULL, true, true);
         this.stock = stock;
         this.dateTime = dateTime;
 
@@ -32,28 +38,34 @@ public class CandleUI extends ElementUI {
 
         this.width = width;
         this.scale = scale;
+
+        updateData();
     }
 
     //Current Candle. Current candles have a dateTime of NULL
     public CandleUI(Stock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
-        this(stock,null,x,focusY,focusPrice,width,scale);
+        this(stock, stock.getOpenTime(), x, focusY, focusPrice, width, scale);
     }
 
     @Override
     public void drawElement(Scene scene, Vector mousePos) {
-        double wickWidth = getBodySize().getX()/6;
+        updateData();
+        float open = data[0];
+        float min = data[2];
+        float max = data[3];
+
+        double wickWidth = getBodySize().getX() / 6;
 
         //Wicks
         int colorOffset = 100;
-        Vector wickPos = getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2),0);
+        Vector wickPos = getPos().getAdded((getBodySize().getX() / 2) - (wickWidth / 2), 0);
         ColorE wickColor = new ColorE(getColor().getRed() - colorOffset, getColor().getGreen() - colorOffset, getColor().getBlue() - colorOffset);
-        QuickDraw.drawRect(wickPos,new Vector(wickWidth, -(getStock().getMax(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY()), wickColor);
-        QuickDraw.drawRect(wickPos,new Vector(wickWidth, (getStock().getOpen(getOpenTime()) - getStock().getMin(getOpenTime()))*getScale().getY()), wickColor);
+        QuickDraw.drawRect(wickPos, new Vector(wickWidth, -(max - open) * getScale().getY()), wickColor);
+        QuickDraw.drawRect(wickPos, new Vector(wickWidth, (open - min) * getScale().getY()), wickColor);
 
         //Body
-        QuickDraw.drawRect(getPos().getAdded(0,getBodySize().getY()/2),new Vector(getBodySize().getX(),1),getColor()); //Base Gray Candle
-        QuickDraw.drawRect(getPos(),getBodySize(),getColor());
-
+        QuickDraw.drawRect(getPos().getAdded(0, getBodySize().getY() / 2), new Vector(getBodySize().getX(), 1), getColor()); //Base Gray Candle
+        QuickDraw.drawRect(getPos(), getBodySize(), getColor());
     }
 
     @Override
@@ -68,13 +80,25 @@ public class CandleUI extends ElementUI {
         return mouseOver = (mouseOverX && mouseOverYDown) || (mouseOverX && mouseOverYUp);
     }
 
+    //Data is updated like this so that there are not many calls to stock get methods as those are not as efficient
+    private void updateData() {
+        if (getOpenTime().equals(getStock().getOpenTime())) {
+            data = new float[]{getStock().getOpen(), getStock().getPrice(), getStock().getMin(), getStock().getMax()};
+        } else {
+            data = getStock().getData(getOpenTime());
+        }
+    }
 
     public boolean isGreen() {
-        return getStock().getClose(getOpenTime()) > getStock().getOpen(getOpenTime());
+        float open = data[0];
+        float close = data[1];
+        return close > open;
     }
 
     public boolean isRed() {
-        return getStock().getClose(getOpenTime()) < getStock().getOpen(getOpenTime());
+        float open = data[0];
+        float close = data[1];
+        return close < open;
     }
 
     public ColorE getColor() {
@@ -85,12 +109,15 @@ public class CandleUI extends ElementUI {
 
     @Override
     public Vector getPos() {
-        return new Vector(this.x, getFocusY() -(getStock().getOpen(getOpenTime()) * getScale().getY()) + getFocusPrice()*getScale().getY());
+        float open = data[0];
+        return new Vector(this.x, getFocusY() - (open * getScale().getY()) + getFocusPrice() * getScale().getY());
     }
 
     public Vector getBodySize() {
-        double candleHeight = -(getStock().getClose(getOpenTime()) - getStock().getOpen(getOpenTime()))*getScale().getY();
-        return new Vector(getWidth()*getScale().getX(),candleHeight);
+        float open = data[0];
+        float close = data[1];
+        double candleHeight = -(close - open) * getScale().getY();
+        return new Vector(getWidth() * getScale().getX(), candleHeight);
     }
 
     public double getFocusY() {
