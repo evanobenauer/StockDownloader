@@ -276,19 +276,14 @@ public class Stock {
         String outputFile = filePath + (filePath.equals("") ? "" : "/") + fileName.replace(".csv","") + ".csv";
         long fileSize = hashMap.size();
         long currentRow = 0;
-        try {
-            FileWriter writer = new FileWriter(outputFile);
-
+        try(FileWriter writer = new FileWriter(outputFile)) {
             for (Long key : hashMap.keySet()) {
                 writer.write(key + "," + Arrays.toString(hashMap.get(key)).replace("[","").replace("]","").replace(" ","") + "\n");
                 currentRow += 1;
                 getProgressContainer().set((double) (currentRow / fileSize));
             }
-            writer.close();
-            this.progressActive = false;
             return true;
-        } catch (IOException e) {
-            System.out.println("Error writing data to " + outputFile);
+        } catch (IOException | SecurityException e) {
             e.printStackTrace();
         }
         this.progressActive = false;
@@ -364,7 +359,7 @@ public class Stock {
     public float[] getData(DateTime dateTime) {
         float[] rawData = getHistoricalData().get(dateTime.getDateTimeID());
         if (rawData == null) return new float[]{-1,-1,-1,-1,-1};
-        return new float[]{rawData[0],rawData[1],rawData[2],rawData[3]};
+        return rawData;
     }
 
     public float getOpen() {
