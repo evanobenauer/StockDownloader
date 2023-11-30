@@ -2,16 +2,12 @@ package com.ejo.stockdownloader.render;
 
 
 import com.ejo.glowlib.math.Vector;
-import com.ejo.glowlib.math.VectorMod;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.data.Stock;
-import com.ejo.stockdownloader.util.StockUtil;
-
-import java.util.HashMap;
 
 public class CandleUI extends ElementUI {
 
@@ -26,6 +22,10 @@ public class CandleUI extends ElementUI {
 
     private final Vector scale;
 
+    private ColorE colorGreen;
+    private ColorE colorRed;
+    private ColorE colorNull;
+
     //Historical Candle
     public CandleUI(Stock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
         super(Vector.NULL, true, true);
@@ -38,6 +38,10 @@ public class CandleUI extends ElementUI {
 
         this.width = width;
         this.scale = scale;
+
+        this.colorGreen = new ColorE(75, 200, 75);
+        this.colorRed = new ColorE(200, 50, 50);
+        this.colorNull = ColorE.GRAY;
 
         updateData();
     }
@@ -89,6 +93,21 @@ public class CandleUI extends ElementUI {
         }
     }
 
+    public CandleUI setGreen(ColorE color) {
+        this.colorGreen = color;
+        return this;
+    }
+
+    public CandleUI setRed(ColorE color) {
+        this.colorRed = color;
+        return this;
+    }
+
+    public CandleUI setColorNull(ColorE color) {
+        this.colorNull = color;
+        return this;
+    }
+
     public boolean isGreen() {
         float open = data[0];
         float close = data[1];
@@ -102,9 +121,9 @@ public class CandleUI extends ElementUI {
     }
 
     public ColorE getColor() {
-        if (isGreen()) return new ColorE(75, 200, 75);
-        if (isRed()) return new ColorE(200, 50, 50);
-        return ColorE.GRAY;
+        if (isGreen()) return colorGreen;
+        if (isRed()) return colorRed;
+        return colorNull;
     }
 
     @Override
