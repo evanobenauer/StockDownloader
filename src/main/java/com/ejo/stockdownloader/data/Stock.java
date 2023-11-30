@@ -1,6 +1,7 @@
 package com.ejo.stockdownloader.data;
 
 import com.ejo.glowlib.file.CSVManager;
+import com.ejo.glowlib.file.FileManager;
 import com.ejo.glowlib.misc.DoOnce;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
@@ -8,11 +9,9 @@ import com.ejo.glowlib.time.StopWatch;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -30,7 +29,7 @@ public class Stock {
     private PriceSource livePriceSource;
 
     //Historical Data HashMap
-    private HashMap<Long, String[]> dataHash = new HashMap<>();
+    private HashMap<Long, float[]> dataHash = new HashMap<>();
 
     //Open Time
     private DateTime openTime;
@@ -176,7 +175,7 @@ public class Stock {
         this.doClose.run(() -> {
             DateTime ct = StockUtil.getAdjustedCurrentTime();
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
-            String[] timeFrameData = {String.valueOf(getOpen()), String.valueOf(getPrice()), String.valueOf(getMin()), String.valueOf(getMax())};
+            float[] timeFrameData = {getOpen(), getPrice(), getMin(), getMax()};
             DateTime openTime = new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() - getTimeFrame().getSeconds());
             if (getOpenTime() != null) dataHash.put(openTime.getDateTimeID(), timeFrameData);
 
@@ -225,11 +224,12 @@ public class Stock {
      *
      * @return
      */
-    public HashMap<Long, String[]> loadHistoricalData(String filePath, String fileName) {
+    //TODO: Make this cast all values to floats so we don't need to recast every single time
+    public HashMap<Long, float[]> loadHistoricalData(String filePath, String fileName) {
         this.progressActive = true;
         try {
             File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
-            HashMap<Long, String[]> rawMap = new HashMap<>();
+            HashMap<Long, float[]> rawMap = new HashMap<>();
 
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 String line;
@@ -239,13 +239,18 @@ public class Stock {
                     String[] row = line.split(",");
                     String key = row[0];
                     String[] rowCut = line.replace(key + ",", "").split(",");
-                    rawMap.put(Long.parseLong(row[0]), rowCut);
+
+                    float[] floatRowCut = new float[rowCut.length];
+                    for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
+
+                    rawMap.put(Long.parseLong(row[0]), floatRowCut);
                     currentRow += 1;
                     getProgressContainer().set((double) (currentRow / fileSize));
                 }
             } catch (IOException | SecurityException e) {
                 e.printStackTrace();
             }
+            this.progressActive = false;
             return this.dataHash = rawMap;
         } catch (Exception e) {
             e.printStackTrace();
@@ -254,7 +259,7 @@ public class Stock {
         return new HashMap<>();
     }
 
-    public HashMap<Long, String[]> loadHistoricalData() {
+    public HashMap<Long, float[]> loadHistoricalData() {
         return loadHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
@@ -265,7 +270,29 @@ public class Stock {
      * @return
      */
     public boolean saveHistoricalData(String filePath, String fileName) {
-        return CSVManager.saveAsCSV(getHistoricalData(), filePath, fileName); //TODO: Add progress bar
+        this.progressActive = true;
+        FileManager.createFolderPath(filePath); //Creates the folder path if it does not exist
+        HashMap<Long, float[]> hashMap = getHistoricalData();
+        String outputFile = filePath + (filePath.equals("") ? "" : "/") + fileName.replace(".csv","") + ".csv";
+        long fileSize = hashMap.size();
+        long currentRow = 0;
+        try {
+            FileWriter writer = new FileWriter(outputFile);
+
+            for (Long key : hashMap.keySet()) {
+                writer.write(key + "," + Arrays.toString(hashMap.get(key)).replace("[","").replace("]","").replace(" ","") + "\n");
+                currentRow += 1;
+                getProgressContainer().set((double) (currentRow / fileSize));
+            }
+            writer.close();
+            this.progressActive = false;
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error writing data to " + outputFile);
+            e.printStackTrace();
+        }
+        this.progressActive = false;
+        return false;
     }
 
     public boolean saveHistoricalData() {
@@ -335,10 +362,9 @@ public class Stock {
      * @return
      */
     public float[] getData(DateTime dateTime) {
-        String[] rawData = getHistoricalData().get(dateTime.getDateTimeID());
+        float[] rawData = getHistoricalData().get(dateTime.getDateTimeID());
         if (rawData == null) return new float[]{-1,-1,-1,-1,-1};
-
-        return new float[]{Float.parseFloat(rawData[0]),Float.parseFloat(rawData[1]),Float.parseFloat(rawData[2]),Float.parseFloat(rawData[3])};
+        return new float[]{rawData[0],rawData[1],rawData[2],rawData[3]};
     }
 
     public float getOpen() {
@@ -398,7 +424,7 @@ public class Stock {
         return livePriceSource;
     }
 
-    public HashMap<Long, String[]> getHistoricalData() {
+    public HashMap<Long, float[]> getHistoricalData() {
         return dataHash;
     }
 
