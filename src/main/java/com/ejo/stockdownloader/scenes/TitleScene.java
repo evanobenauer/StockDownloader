@@ -340,7 +340,7 @@ public class TitleScene extends Scene {
 
                 case "Month" -> {
                     if (alphaVantageYear.get().length() == 4 && alphaVantageMonth.get().length() == 2) {
-                        downloader.download(alphaVantageYear.get(), alphaVantageMonth.get());
+                        downloader.download(Integer.parseInt(alphaVantageYear.get()), Integer.parseInt(alphaVantageMonth.get()));
                     } else {
                         warningText.setText("Invalid Time! - Make sure time is in the form: MM / YYYY").setColor(ColorE.RED);
                     }

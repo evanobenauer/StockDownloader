@@ -60,10 +60,10 @@ public class AlphaVantageDownloader extends APIDownloader {
         fos.close();
     }
 
-    public void download(String year, String month) {
+    public void download(int year, int month) {
         try {
             initDownloadContainers();
-            downloadFile(year, month, PATH_MAIN, getDownloadProgress());
+            downloadFile(String.valueOf(year), getMonthString(month), PATH_MAIN, getDownloadProgress());
 
             //Load the last file, check if error. If so, break and set limit reached
             ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");

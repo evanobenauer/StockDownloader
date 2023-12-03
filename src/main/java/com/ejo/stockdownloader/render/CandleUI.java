@@ -68,7 +68,7 @@ public class CandleUI extends ElementUI {
         QuickDraw.drawRect(wickPos, new Vector(wickWidth, (open - min) * getScale().getY()), wickColor);
 
         //Body
-        QuickDraw.drawRect(getPos().getAdded(0, getBodySize().getY() / 2), new Vector(getBodySize().getX(), 1), getColor()); //Base Gray Candle
+        QuickDraw.drawRect(getPos(), new Vector(getBodySize().getX(), 1), getColor()); //Base Gray Candle
         QuickDraw.drawRect(getPos(), getBodySize(), getColor());
     }
 
