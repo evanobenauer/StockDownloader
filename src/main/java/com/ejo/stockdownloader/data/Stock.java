@@ -399,7 +399,8 @@ public class Stock {
      */
     public float[] getData(DateTime dateTime) {
         float[] rawData = getHistoricalData().get(dateTime.getDateTimeID());
-        if (rawData == null) return new float[]{-1,-1,-1,-1,-1};
+        if (rawData == null)
+            return dateTime.equals(getOpenTime()) ? new float[]{getOpen(),getPrice(),getMin(),getMax()} : new float[]{-1,-1,-1,-1,-1};
         return rawData;
     }
 
@@ -408,7 +409,6 @@ public class Stock {
     }
 
     public float getOpen(DateTime dateTime) {
-        if (dateTime.equals(getOpenTime())) return getOpen();
         return getData(dateTime)[0];
     }
 
@@ -417,7 +417,6 @@ public class Stock {
     }
 
     public float getClose(DateTime dateTime) {
-        if (dateTime.equals(getOpenTime())) return getPrice();
         return getData(dateTime)[1];
     }
 
@@ -426,7 +425,6 @@ public class Stock {
     }
 
     public float getMin(DateTime dateTime) {
-        if (dateTime.equals(getOpenTime())) return getMin();
         return getData(dateTime)[2];
     }
 
@@ -435,7 +433,6 @@ public class Stock {
     }
 
     public float getMax(DateTime dateTime) {
-        if (dateTime.equals(getOpenTime())) return getMax();
         return getData(dateTime)[3];
     }
 
