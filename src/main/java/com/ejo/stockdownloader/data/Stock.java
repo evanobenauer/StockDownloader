@@ -224,7 +224,6 @@ public class Stock {
      *
      * @return
      */
-    //TODO: Make this cast all values to floats so we don't need to recast every single time
     public HashMap<Long, float[]> loadHistoricalData(String filePath, String fileName) {
         this.progressActive = true;
         try {
@@ -237,13 +236,13 @@ public class Stock {
                 long currentRow = 0;
                 while ((line = reader.readLine()) != null) {
                     String[] row = line.split(",");
-                    String key = row[0];
+                    long key = Long.parseLong(row[0]);
                     String[] rowCut = line.replace(key + ",", "").split(",");
 
                     float[] floatRowCut = new float[rowCut.length];
                     for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
 
-                    rawMap.put(Long.parseLong(row[0]), floatRowCut);
+                    rawMap.put(key, floatRowCut);
                     currentRow += 1;
                     getProgressContainer().set((double) (currentRow / fileSize));
                 }
@@ -261,6 +260,48 @@ public class Stock {
 
     public HashMap<Long, float[]> loadHistoricalData() {
         return loadHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
+    }
+
+    /**
+     * Loads all historical data from a file and applies it on top of the current historical data. It will overwrite data if it exists,
+     * but keep data that does not have a key present from the loaded data. This can be used mainly to keep live data and apply an updated
+     * historical data to that live data set
+     * @param filePath
+     * @param fileName
+     * @return
+     */
+    public void applyHistoricalData(HashMap<Long,float[]> historicalData, String filePath, String fileName) {
+        this.progressActive = true;
+        try {
+            File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                long fileSize = Files.lines(file.toPath()).count();
+                long currentRow = 0;
+                while ((line = reader.readLine()) != null) {
+                    String[] row = line.split(",");
+                    long key = Long.parseLong(row[0]);
+                    String[] rowCut = line.replace(key + ",", "").split(",");
+
+                    float[] floatRowCut = new float[rowCut.length];
+                    for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
+
+                    historicalData.put(Long.parseLong(row[0]), floatRowCut);
+                    currentRow += 1;
+                    getProgressContainer().set((double) (currentRow / fileSize));
+                }
+            } catch (IOException | SecurityException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.progressActive = false;
+    }
+
+    public void applyHistoricalData() {
+        applyHistoricalData(getHistoricalData(),"stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
 
