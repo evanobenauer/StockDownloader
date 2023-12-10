@@ -3,8 +3,10 @@ package com.ejo.stockdownloader.data.api;
 import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.file.FileManager;
 import com.ejo.glowlib.setting.Container;
+import com.ejo.glowlib.time.DateTime;
 import com.ejo.stockdownloader.util.StockUtil;
 import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.stockdownloader.util.TimeUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -83,9 +85,6 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void download(int startYear, int startMonth, int endYear, int endMonth) {
-        int yearRange = endYear - startYear;
-        int monthRange = endMonth - startMonth;
-
         int year = startYear;
         int month = startMonth;
 
@@ -117,9 +116,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                     return;
                 }
 
-                double yearPercent = (double) (year - startYear) / (yearRange + 1);
-                double monthPercent = ((year == endYear) ? (double) month / monthRange : (double) month / 12) / (yearRange + 1);
-                setDownloadProgress(yearPercent + monthPercent);
+                setDownloadProgress(TimeUtil.getDateTimePercent(new DateTime(startYear,startMonth,0),new DateTime(year,month,0),new DateTime(endYear,endMonth,0)));
 
                 if (year == endYear && month == endMonth) break;
 

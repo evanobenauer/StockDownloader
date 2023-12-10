@@ -127,7 +127,7 @@ public class Stock {
             }
             if (livePrice != -1) this.price = livePrice;
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Live Data: Timed Out");
         }
     }
 
