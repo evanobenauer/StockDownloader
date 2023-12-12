@@ -244,7 +244,7 @@ public class Stock {
 
                     rawMap.put(key, floatRowCut);
                     currentRow += 1;
-                    getProgressContainer().set((double) (currentRow / fileSize));
+                    getProgressContainer().set((double) currentRow / fileSize);
                 }
             } catch (IOException | SecurityException e) {
                 e.printStackTrace();
@@ -289,7 +289,7 @@ public class Stock {
 
                     historicalData.put(Long.parseLong(row[0]), floatRowCut);
                     currentRow += 1;
-                    getProgressContainer().set((double) (currentRow / fileSize));
+                    getProgressContainer().set((double) currentRow / fileSize);
                 }
             } catch (IOException | SecurityException e) {
                 e.printStackTrace();
@@ -321,7 +321,7 @@ public class Stock {
             for (Long key : hashMap.keySet()) {
                 writer.write(key + "," + Arrays.toString(hashMap.get(key)).replace("[","").replace("]","").replace(" ","") + "\n");
                 currentRow += 1;
-                getProgressContainer().set((double) (currentRow / fileSize));
+                getProgressContainer().set((double) currentRow / fileSize);
             }
             return true;
         } catch (IOException | SecurityException e) {

@@ -225,6 +225,14 @@ public class AlphaVantageDownloader extends APIDownloader {
             hour = (Integer.parseInt(time[0]) < 10) ? "0" + time[0] : time[0];
             minute = time[1];
             second = "00";
+        } else if (!dateTime.contains(":")) {
+            date = dateTime.split(" ")[0].split("-");
+            year = date[0];
+            month = date[1];
+            day = date[2];
+            hour = "09";
+            minute = "30";
+            second = "00";
         } else {
             date = dateTime.split(" ")[0].split("-");
             time = dateTime.split(" ")[1].split(":");
@@ -288,7 +296,15 @@ public class AlphaVantageDownloader extends APIDownloader {
 
 
     private String getURL(String year, String month) {
-        return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval=" + getTimeFrame().getTag() + "&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + year + "-" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
+        if (getTimeFrame().getSeconds() <= TimeFrame.ONE_HOUR.getSeconds()) {
+            return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval=" + getTimeFrame().getTag() + "&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + year + "-" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
+        } else if (getTimeFrame().getTag().equals("1day")) {
+            String dailyFunction = "TIME_SERIES_DAILY";
+            return "https://www.alphavantage.co/query?function=" + dailyFunction + "&symbol=" + getTicker() + "&interval=" + getTimeFrame().getTag() + "&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + year + "-" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
+        } else {
+            //Figure out a way to get 2hr, 4hr candles. Maybe creation a combination algorithm for difference candle types from 1 minute
+            return "NULL";
+        }
     }
 
     private void setLimitReached(boolean limitReached) {

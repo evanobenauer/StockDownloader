@@ -48,7 +48,11 @@ public class LiveDownloadScene extends Scene {
         App.getWindow().setEconomic(true);
 
         addElements(
-                saveButton = new ButtonUI("Force Save", Vector.NULL, new Vector(100, 40), new ColorE(0, 125, 200, 200), ButtonUI.MouseButton.LEFT,stock::saveHistoricalData),
+                saveButton = new ButtonUI("Force Save", Vector.NULL, new Vector(100, 40), new ColorE(0, 125, 200, 200), ButtonUI.MouseButton.LEFT,() -> {
+                    Thread thread = new Thread(() -> System.out.println(stock.saveHistoricalData() ? "Saved" : "Could Not Save"));
+                    thread.setDaemon(true);
+                    thread.start();
+                }),
                 exitButton = new ButtonUI(Vector.NULL, new Vector(15, 15), new ColorE(200, 0, 0, 255), ButtonUI.MouseButton.LEFT, () -> getWindow().setScene(new TitleScene())),
                 bottomBar = new SideBarUI(SideBarUI.Type.BOTTOM, 60,true,new ColorE(25, 25, 25, 255),
                         candlePercent = new ProgressBarUI<>(new Vector(10,22), new Vector(200, 20), ColorE.BLUE, stock.getClosePercent(), 0, 1),
@@ -113,7 +117,10 @@ public class LiveDownloadScene extends Scene {
         //Save stored data every minute
         saveWatch.start();
         if (saveWatch.hasTimePassedS(60)) {
-            System.out.println(stock.saveHistoricalData() ? "Saved" : "Could Not Save");
+            System.out.println("Trying to save data...");
+            Thread thread = new Thread(() -> System.out.println(stock.saveHistoricalData() ? "Saved" : "Could Not Save"));
+            thread.setDaemon(true);
+            thread.start();
             saveWatch.restart();
         }
 
