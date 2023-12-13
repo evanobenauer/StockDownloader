@@ -323,6 +323,7 @@ public class Stock {
                 currentRow += 1;
                 getProgressContainer().set((double) currentRow / fileSize);
             }
+            this.progressActive = false;
             return true;
         } catch (IOException | SecurityException e) {
             e.printStackTrace();
