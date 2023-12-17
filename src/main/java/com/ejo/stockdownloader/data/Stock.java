@@ -1,6 +1,5 @@
 package com.ejo.stockdownloader.data;
 
-import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.file.FileManager;
 import com.ejo.glowlib.misc.DoOnce;
 import com.ejo.glowlib.setting.Container;
@@ -13,6 +12,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
+
+//TODO: dumb down this class as it will no longer be the library for TradeCompanion
 
 /**
  * The stock class is a multi use class. It encompasses both loading historical data and adding new data to said history. The live data is updated
@@ -225,6 +226,7 @@ public class Stock {
      * @return
      */
     public HashMap<Long, float[]> loadHistoricalData(String filePath, String fileName) {
+        getProgressContainer().set(0d);
         this.progressActive = true;
         try {
             File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
@@ -271,6 +273,7 @@ public class Stock {
      * @return
      */
     public void applyHistoricalData(HashMap<Long,float[]> historicalData, String filePath, String fileName) {
+        getProgressContainer().set(0d);
         this.progressActive = true;
         try {
             File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
@@ -311,6 +314,7 @@ public class Stock {
      * @return
      */
     public boolean saveHistoricalData(String filePath, String fileName) {
+        getProgressContainer().set(0d);
         this.progressActive = true;
         FileManager.createFolderPath(filePath); //Creates the folder path if it does not exist
         HashMap<Long, float[]> hashMap = getHistoricalData();
