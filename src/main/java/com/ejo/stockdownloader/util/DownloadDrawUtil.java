@@ -6,8 +6,8 @@ import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.util.render.QuickDraw;
-import com.ejo.stockdownloader.data.Stock;
-import com.ejo.stockdownloader.render.CandleUI;
+import com.ejo.stockdownloader.data.LiveDownloadStock;
+import com.ejo.stockdownloader.render.LiveDownloadCandle;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -15,12 +15,12 @@ import java.util.ArrayList;
 public class DownloadDrawUtil {
 
 
-    public static void drawDownloadCandles(Scene scene, Stock stock, DateTime endTime, double focusPrice, double focusY, double separation, double candleWidth, Vector candleScale) {
+    public static void drawDownloadCandles(Scene scene, LiveDownloadStock stock, DateTime endTime, double focusPrice, double focusY, double separation, double candleWidth, Vector candleScale) {
 
         //Define Candle List
-        ArrayList<CandleUI> listCandle = new ArrayList<>();
+        ArrayList<LiveDownloadCandle> listCandle = new ArrayList<>();
 
-        DateTime openTime = endTime.equals(StockUtil.getAdjustedCurrentTime()) ? stock.getOpenTime() : endTime;
+        DateTime openTime = endTime.equals(DownloadStockUtil.getAdjustedCurrentTime()) ? stock.getOpenTime() : endTime;
 
         //Create Historical Candles
         try {
@@ -28,19 +28,19 @@ public class DownloadDrawUtil {
             for (int i = 0; i < candleAmount; i++) {
                 double x = scene.getSize().getX() - ((separation + candleWidth) * (i + 1)) * candleScale.getX();
                 DateTime candleTime = new DateTime(openTime.getYear(), openTime.getMonth(), openTime.getDay(), openTime.getHour(), openTime.getMinute(), openTime.getSecond() - stock.getTimeFrame().getSeconds() * i);
-                CandleUI historicalCandle = new CandleUI(stock, candleTime, x, focusY, focusPrice, candleWidth * candleScale.getX(), new Vector(1, candleScale.getY()));
+                LiveDownloadCandle historicalCandle = new LiveDownloadCandle(stock, candleTime, x, focusY, focusPrice, candleWidth * candleScale.getX(), new Vector(1, candleScale.getY()));
                 listCandle.add(historicalCandle);
             }
         } catch (NullPointerException e) {
         }
 
         //Draw Candles
-        for (CandleUI candle : listCandle) {
+        for (LiveDownloadCandle candle : listCandle) {
             if (candle.getStock().getOpen(candle.getOpenTime()) != -1) candle.draw();
         }
 
         //Draw Tooltips
-        for (CandleUI candle : listCandle) {
+        for (LiveDownloadCandle candle : listCandle) {
             if (candle.getStock().getOpen(candle.getOpenTime()) != -1) {
                 candle.tick(scene); //Update Mouse Over
                 if (candle.isMouseOver()) drawCandleTooltip(candle, scene.getWindow().getScaledMousePos());
@@ -49,8 +49,8 @@ public class DownloadDrawUtil {
 
     }
 
-    public static void drawCandleTooltip(CandleUI candle, Vector mousePos) {
-        Stock stock = candle.getStock();
+    public static void drawCandleTooltip(LiveDownloadCandle candle, Vector mousePos) {
+        LiveDownloadStock stock = candle.getStock();
         int textSize = 10;
         double x = mousePos.getX() - 96;
         double y = mousePos.getY() - textSize * 5 - 7;

@@ -4,18 +4,17 @@ import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
 
-public class StockUtil {
+public class DownloadStockUtil {
 
+    @Deprecated
     public static final Container<Integer> SECOND_ADJUST = new Container<>(0);
 
     private static final String WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36";
 
-    //TODO: This is very dependent on internet speed. Maybe put it on its own thread as not to mess up stuff
     public static float getWebScrapePrice(String url, String attributeKey, String attributeValue, int priceIndex) throws IOException {
         try {
             Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
@@ -55,6 +54,7 @@ public class StockUtil {
         return isTradingHours(currentTime);
     }
 
+    @Deprecated
     public static DateTime getAdjustedCurrentTime() {
         DateTime ct = DateTime.getCurrentDateTime();
         return new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() + SECOND_ADJUST.get());

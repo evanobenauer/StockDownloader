@@ -16,10 +16,12 @@ import com.ejo.glowui.scene.elements.widget.ToggleUI;
 import com.ejo.glowui.util.render.Fonts;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
-import com.ejo.stockdownloader.data.Stock;
+import com.ejo.stockdownloader.data.LiveDownloadStock;
 import com.ejo.stockdownloader.data.api.APIDownloader;
 import com.ejo.stockdownloader.data.api.AlphaVantageDownloader;
-import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.stockdownloader.util.DownloadTimeFrame;
+import com.ejo.uiphysics.elements.PhysicsDraggableUI;
+import com.ejo.uiphysics.elements.PhysicsObjectUI;
 //import com.ejo.uiphysics.elements.PhysicsDraggableUI;
 //import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
@@ -32,12 +34,12 @@ public class TitleScene extends Scene {
 
     //Main Data Settings
     private final Setting<String> stockTicker = new Setting<>("stockTicker", "");
-    private final Setting<TimeFrame> timeFrame = new Setting<>("timeFrame", TimeFrame.ONE_MINUTE);
+    private final Setting<DownloadTimeFrame> timeFrame = new Setting<>("timeFrame", DownloadTimeFrame.ONE_MINUTE);
     private final Setting<String> downloadMode = new Setting<>("downloadMode", "Live Data");
 
     //Live Data Settings
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive", false);
-    private final Setting<Stock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", Stock.PriceSource.MARKETWATCH);
+    private final Setting<LiveDownloadStock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", LiveDownloadStock.PriceSource.MARKETWATCH);
 
     //Api Settings
     private final Setting<String> api = new Setting<>("api", "AlphaVantage");
@@ -59,7 +61,7 @@ public class TitleScene extends Scene {
     private final TextUI title = new TextUI("Stock Downloader", new Font("Arial Black", Font.BOLD, 50), Vector.NULL, ColorE.WHITE);
 
     private final TextFieldUI stockTickerField = new TextFieldUI(Vector.NULL, new Vector(100, 20), ColorE.WHITE, stockTicker, "Stock", false);
-    private final ModeCycleUI<TimeFrame> timeFrameMode = new ModeCycleUI<>(Vector.NULL, new Vector(100, 20), ColorE.BLUE, timeFrame, TimeFrame.ONE_SECOND, TimeFrame.FIVE_SECONDS, TimeFrame.THIRTY_SECONDS, TimeFrame.ONE_MINUTE, TimeFrame.FIVE_MINUTES, TimeFrame.THIRTY_MINUTES, TimeFrame.ONE_HOUR, TimeFrame.TWO_HOUR, TimeFrame.FOUR_HOUR, TimeFrame.ONE_DAY);
+    private final ModeCycleUI<DownloadTimeFrame> timeFrameMode = new ModeCycleUI<>(Vector.NULL, new Vector(100, 20), ColorE.BLUE, timeFrame, DownloadTimeFrame.ONE_SECOND, DownloadTimeFrame.FIVE_SECONDS, DownloadTimeFrame.THIRTY_SECONDS, DownloadTimeFrame.ONE_MINUTE, DownloadTimeFrame.FIVE_MINUTES, DownloadTimeFrame.THIRTY_MINUTES, DownloadTimeFrame.ONE_HOUR, DownloadTimeFrame.TWO_HOUR, DownloadTimeFrame.FOUR_HOUR, DownloadTimeFrame.ONE_DAY);
 
     private final ProgressBarUI<Double> progressBarApiDownload = new ProgressBarUI<>(Vector.NULL, new Vector(200, 20), ColorE.BLUE, new Container<>(0d), 0, 1);
     private final TextUI warningText = new TextUI("", Fonts.getDefaultFont(20), Vector.NULL, ColorE.WHITE);
@@ -69,7 +71,7 @@ public class TitleScene extends Scene {
         if (stockTickerField.getContainer().get().equals("")) return;
 
         switch (downloadMode.get()) {
-            case "Live Data" -> getWindow().setScene(new LiveDownloadScene(new Stock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get(), livePriceSource.get())));
+            case "Live Data" -> getWindow().setScene(new LiveDownloadScene(new LiveDownloadStock(stockTicker.get().replace(" ", ""), timeFrame.get(), liveExtendedHours.get(), livePriceSource.get())));
 
             case "API" -> {
                 updateApiDownloader();
@@ -101,7 +103,7 @@ public class TitleScene extends Scene {
     private final ModeCycleUI<String> modeDownloadMode = new ModeCycleUI<>(new Vector(15, 55), new Vector(110, 20), ColorE.BLUE, downloadMode, "Live Data", "API");
 
     private final ToggleUI toggleLiveExtendedHours = new ToggleUI("Extended Hours", new Vector(15, modeDownloadMode.getPos().getY() + 50), new Vector(110, 20), new ColorE(0, 200, 255, 255), liveExtendedHours);
-    private final ModeCycleUI<Stock.PriceSource> modeLivePriceSource = new ModeCycleUI<>("Source", new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, Stock.PriceSource.MARKETWATCH, Stock.PriceSource.YAHOOFINANCE);
+    private final ModeCycleUI<LiveDownloadStock.PriceSource> modeLivePriceSource = new ModeCycleUI<>("Source", new Vector(15, toggleLiveExtendedHours.getPos().getY() + yInc), new Vector(110, 20), ColorE.BLUE, livePriceSource, LiveDownloadStock.PriceSource.MARKETWATCH, LiveDownloadStock.PriceSource.YAHOOFINANCE);
 
     private final ModeCycleUI<String> modeApi = new ModeCycleUI<>(new Vector(15, modeDownloadMode.getPos().getY() + 50), new Vector(110, 20), ColorE.BLUE, api, "AlphaVantage");
 
@@ -154,7 +156,7 @@ public class TitleScene extends Scene {
             for (int i = 0; i < 20; i++) {
                 int speed = 30;
                 Vector speedVec = new Vector(random.nextInt(-speed,speed),random.nextInt(-speed,speed));
-                //addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
+                addElements(new PhysicsDraggableUI(new RectangleUI(getSize().getMultiplied(.5), new Vector(10, 10), new ColorE(random.nextInt(0,255), random.nextInt(0,255), random.nextInt(0,255), 255)), 1, speedVec, Vector.NULL));
             }
 
             //Set Progress Bar Off By Default
@@ -189,7 +191,7 @@ public class TitleScene extends Scene {
 
         //Bounce Physics Squares
         for (ElementUI element : getElements()) {
-           // if (element instanceof PhysicsObjectUI phys) doPhysicsBounce(phys);
+            if (element instanceof PhysicsObjectUI phys) doPhysicsBounce(phys);
         }
     }
 
@@ -374,7 +376,7 @@ public class TitleScene extends Scene {
         }
     }
 
-    /*
+
     private void doPhysicsBounce(PhysicsObjectUI phys) {
         int size = 10;
         if (phys.getPos().getX() < 0) {
@@ -394,6 +396,4 @@ public class TitleScene extends Scene {
             phys.setVelocity(new Vector(phys.getVelocity().getX(), -phys.getVelocity().getY()));
         }
     }
-
-     */
 }

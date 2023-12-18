@@ -4,8 +4,8 @@ import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.file.FileManager;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
-import com.ejo.stockdownloader.util.StockUtil;
-import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.stockdownloader.util.DownloadStockUtil;
+import com.ejo.stockdownloader.util.DownloadTimeFrame;
 import com.ejo.stockdownloader.util.TimeUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,7 +14,6 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class AlphaVantageDownloader extends APIDownloader {
     public final String PATH_TEMP = "stock_data/AlphaVantage/" + getTicker() + "/" + getTimeFrame().getTag() + "/temp/";
     public final String FILE_PREFIX = getTicker() + "_" + getTimeFrame().getTag();
 
-    public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, TimeFrame timeFrame, boolean extendedHours) {
+    public AlphaVantageDownloader(String apiKey, boolean premium, String ticker, DownloadTimeFrame timeFrame, boolean extendedHours) {
         super(ticker, timeFrame, extendedHours);
         this.apiKey = apiKey;
         this.premium = premium;
@@ -146,7 +145,7 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void downloadAll() {
-        download(2000, 1, StockUtil.getAdjustedCurrentTime().getYear(), StockUtil.getAdjustedCurrentTime().getMonth());
+        download(2000, 1, DownloadStockUtil.getAdjustedCurrentTime().getYear(), DownloadStockUtil.getAdjustedCurrentTime().getMonth());
     }
 
     public static void formatStockCSV(String directory, String name) {
@@ -296,7 +295,7 @@ public class AlphaVantageDownloader extends APIDownloader {
 
 
     private String getURL(String year, String month) {
-        if (getTimeFrame().getSeconds() <= TimeFrame.ONE_HOUR.getSeconds()) {
+        if (getTimeFrame().getSeconds() <= DownloadTimeFrame.ONE_HOUR.getSeconds()) {
             return "https://www.alphavantage.co/query?function=" + FUNCTION + "&symbol=" + getTicker() + "&interval=" + getTimeFrame().getTag() + "&adjusted=" + ADJUSTED + "&extended_hours=" + isExtendedHours() + "&month=" + year + "-" + month + "&outputsize=" + OUTPUT_SIZE + "&apikey=" + getApiKey() + "&datatype=" + DATA_TYPE;
         } else if (getTimeFrame().getTag().equals("1day")) {
             String dailyFunction = "TIME_SERIES_DAILY";

@@ -5,15 +5,13 @@ import com.ejo.glowlib.misc.DoOnce;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
-import com.ejo.stockdownloader.util.StockUtil;
-import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.stockdownloader.util.DownloadStockUtil;
+import com.ejo.stockdownloader.util.DownloadTimeFrame;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
-
-//TODO: dumb down this class as it will no longer be the library for TradeCompanion
 
 /**
  * The stock class is a multi use class. It encompasses both loading historical data and adding new data to said history. The live data is updated
@@ -21,16 +19,16 @@ import java.util.HashMap;
  * Historical data is saved in the folder: stock_data/ticker_timeframe.csv. Place data into this location for it to be
  * saved and loaded with the stock
  */
-public class Stock {
+public class LiveDownloadStock {
 
     //Stock Information
     private final String ticker;
-    private final TimeFrame timeFrame;
+    private final DownloadTimeFrame timeFrame;
     private final boolean extendedHours;
-    private PriceSource livePriceSource;
+    private final PriceSource livePriceSource;
 
     //Historical Data HashMap
-    private HashMap<Long, float[]> dataHash = new HashMap<>();
+    private final HashMap<Long, float[]> dataHash = new HashMap<>();
 
     //Open Time
     private DateTime openTime;
@@ -39,8 +37,8 @@ public class Stock {
     private final Container<Double> closePercent;
 
     //Progress Data
-    private final Container<Double> progressContainer = new Container<>(0d);
-    protected boolean progressActive = false;
+    private final Container<Double> saveProgress = new Container<>(0d);
+    protected boolean saving = false;
 
     //Live Price Variables
     private float price;
@@ -58,13 +56,11 @@ public class Stock {
     private final DoOnce doClose = new DoOnce();
 
     //Default Constructor
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource, boolean loadOnInstantiation) {
+    public LiveDownloadStock(String ticker, DownloadTimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
         this.livePriceSource = livePriceSource;
-
-        if (loadOnInstantiation) this.dataHash = loadHistoricalData();
 
         this.setAllData(-1);
         this.closePercent = new Container<>(0d);
@@ -75,10 +71,6 @@ public class Stock {
         this.doClose.reset();
     }
 
-    public Stock(String ticker, TimeFrame timeFrame, boolean extendedHours, PriceSource livePriceSource) {
-        this(ticker, timeFrame, extendedHours, livePriceSource, true);
-    }
-
 
     /**
      * This method updates the live price of the stock as well as the min and max. Depending on the timeframe, the stock will save data to the dataList periodically with this method
@@ -86,7 +78,7 @@ public class Stock {
      */
     public void updateLiveData(double liveDelayS, boolean includePriceUpdate) {
         //Updates the progress bar of each segmentation
-        if (StockUtil.isPriceActive(isExtendedHours(), StockUtil.getAdjustedCurrentTime())) updateClosePercent();
+        if (DownloadStockUtil.isPriceActive(isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime())) updateClosePercent();
 
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
@@ -104,11 +96,6 @@ public class Stock {
         updateMinMax();
     }
 
-    public void updateLiveData() {
-        updateLiveData(0, false);
-    }
-
-
     /**
      * Retrieves and sets the live price data gathered for the stock from web scraping.
      */
@@ -118,11 +105,11 @@ public class Stock {
             switch (getLivePriceSource()) {
                 case MARKETWATCH -> {
                     String url = "https://www.marketwatch.com/investing/fund/" + getTicker();
-                    livePrice = StockUtil.getWebScrapePrice(url, "bg-quote.value", 0);
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url, "bg-quote.value", 0);
                 }
                 case YAHOOFINANCE -> {
                     String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                    livePrice = StockUtil.getWebScrapePrice(url2, "data-test", "qsp-price", 0);
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url2, "data-test", "qsp-price", 0);
                 }
                 default -> livePrice = -1;
             }
@@ -159,7 +146,7 @@ public class Stock {
      */
     private void updateOpen() {
         this.doOpen.run(() -> {
-            this.openTime = StockUtil.getAdjustedCurrentTime();
+            this.openTime = DownloadStockUtil.getAdjustedCurrentTime();
             setAllData(getPrice());
         });
     }
@@ -174,7 +161,7 @@ public class Stock {
             return;
         }
         this.doClose.run(() -> {
-            DateTime ct = StockUtil.getAdjustedCurrentTime();
+            DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             float[] timeFrameData = {getOpen(), getPrice(), getMin(), getMax()};
             DateTime openTime = new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() - getTimeFrame().getSeconds());
@@ -200,7 +187,7 @@ public class Stock {
      * Updates the percentage complete for the current stock candle
      */
     private void updateClosePercent() {
-        DateTime ct = StockUtil.getAdjustedCurrentTime();
+        DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
         double totalPercent = 0;
 
         //Second Percent
@@ -220,119 +207,58 @@ public class Stock {
     }
 
 
-    /**
-     * This method loads all historical data saved in the data directory. It converts the key information of the hashmap data into a long to be used in development
-     *
-     * @return
-     */
-    public HashMap<Long, float[]> loadHistoricalData(String filePath, String fileName) {
-        getProgressContainer().set(0d);
-        this.progressActive = true;
-        try {
-            File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
-            HashMap<Long, float[]> rawMap = new HashMap<>();
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String line;
-                long fileSize = Files.lines(file.toPath()).count();
-                long currentRow = 0;
-                while ((line = reader.readLine()) != null) {
-                    String[] row = line.split(",");
-                    long key = Long.parseLong(row[0]);
-                    String[] rowCut = line.replace(key + ",", "").split(",");
-
-                    float[] floatRowCut = new float[rowCut.length];
-                    for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
-
-                    rawMap.put(key, floatRowCut);
-                    currentRow += 1;
-                    getProgressContainer().set((double) currentRow / fileSize);
-                }
-            } catch (IOException | SecurityException e) {
-                e.printStackTrace();
-            }
-            this.progressActive = false;
-            return this.dataHash = rawMap;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        this.progressActive = false;
-        return new HashMap<>();
-    }
-
-    public HashMap<Long, float[]> loadHistoricalData() {
-        return loadHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
-    }
-
-    /**
-     * Loads all historical data from a file and applies it on top of the current historical data. It will overwrite data if it exists,
-     * but keep data that does not have a key present from the loaded data. This can be used mainly to keep live data and apply an updated
-     * historical data to that live data set
-     * @param filePath
-     * @param fileName
-     * @return
-     */
-    public void applyHistoricalData(HashMap<Long,float[]> historicalData, String filePath, String fileName) {
-        getProgressContainer().set(0d);
-        this.progressActive = true;
-        try {
-            File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                String line;
-                long fileSize = Files.lines(file.toPath()).count();
-                long currentRow = 0;
-                while ((line = reader.readLine()) != null) {
-                    String[] row = line.split(",");
-                    long key = Long.parseLong(row[0]);
-                    String[] rowCut = line.replace(key + ",", "").split(",");
-
-                    float[] floatRowCut = new float[rowCut.length];
-                    for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
-
-                    historicalData.put(Long.parseLong(row[0]), floatRowCut);
-                    currentRow += 1;
-                    getProgressContainer().set((double) currentRow / fileSize);
-                }
-            } catch (IOException | SecurityException e) {
-                e.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        this.progressActive = false;
-    }
-
-    public void applyHistoricalData() {
-        applyHistoricalData(getHistoricalData(),"stock_data", getTicker() + "_" + getTimeFrame().getTag());
-    }
-
-
-    /**
-     * This method saves all historical data from the HashMap as a CSV file using GlowLib
-     *
-     * @return
-     */
     public boolean saveHistoricalData(String filePath, String fileName) {
-        getProgressContainer().set(0d);
-        this.progressActive = true;
+        getSaveProgress().set(0d);
+        this.saving = true;
+
+        //Load all file data
+        HashMap<Long,float[]> dataMap = new HashMap<>();
+        try {
+            File file = new File(filePath + (fileName.equals("") ? "" : "/") + fileName.replace(".csv", "") + ".csv");
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                long fileSize = Files.lines(file.toPath()).count();
+                long currentRow = 0;
+                while ((line = reader.readLine()) != null) {
+                    String[] row = line.split(",");
+                    long key = Long.parseLong(row[0]);
+                    String[] rowCut = line.replace(key + ",", "").split(",");
+
+                    float[] floatRowCut = new float[rowCut.length];
+                    for (int i = 0; i < rowCut.length; i++) floatRowCut[i] = Float.parseFloat(rowCut[i]);
+
+                    dataMap.put(key, floatRowCut);
+                    currentRow += 1;
+                    getSaveProgress().set((double) currentRow / fileSize / 2);
+                }
+            } catch (IOException | SecurityException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //Add all class data
+        dataMap.putAll(getHistoricalData());
+
+        //Save all data
         FileManager.createFolderPath(filePath); //Creates the folder path if it does not exist
-        HashMap<Long, float[]> hashMap = getHistoricalData();
         String outputFile = filePath + (filePath.equals("") ? "" : "/") + fileName.replace(".csv","") + ".csv";
-        long fileSize = hashMap.size();
+        long fileSize = dataMap.size();
         long currentRow = 0;
         try(FileWriter writer = new FileWriter(outputFile)) {
-            for (Long key : hashMap.keySet()) {
-                writer.write(key + "," + Arrays.toString(hashMap.get(key)).replace("[","").replace("]","").replace(" ","") + "\n");
+            for (Long key : dataMap.keySet()) {
+                writer.write(key + "," + Arrays.toString(dataMap.get(key)).replace("[","").replace("]","").replace(" ","") + "\n");
                 currentRow += 1;
-                getProgressContainer().set((double) currentRow / fileSize);
+                getSaveProgress().set((double) currentRow / fileSize / 2 + .5);
             }
-            this.progressActive = false;
+            this.saving = false;
             return true;
         } catch (IOException | SecurityException e) {
             e.printStackTrace();
         }
-        this.progressActive = false;
+        this.saving = false;
         return false;
     }
 
@@ -340,21 +266,18 @@ public class Stock {
         return saveHistoricalData("stock_data", getTicker() + "_" + getTimeFrame().getTag());
     }
 
-    /**
-     * Checks if the stock should update live data. This method has the main purpose of stopping the update method if returned false
-     *
-     * @return
-     */
+        /**
+         * Checks if the stock should update live data. This method has the main purpose of stopping the update method if returned false
+         *
+         * @return
+         */
     public boolean shouldUpdate() {
         //Wait until the start of the candle timeframe to allow updates
         if (shouldClose()) this.shouldStartUpdates = true;
         if (!this.shouldStartUpdates) return false;
 
         //Only allows for data collection during trading hours
-        return StockUtil.isPriceActive(isExtendedHours(), StockUtil.getAdjustedCurrentTime());
-
-        //Finally, if all checks pass,
-        //return true;
+        return DownloadStockUtil.isPriceActive(isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime());
     }
 
     /**
@@ -363,7 +286,7 @@ public class Stock {
      * @return
      */
     public boolean shouldClose() {
-        DateTime ct = StockUtil.getAdjustedCurrentTime();
+        DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
         return switch (getTimeFrame()) {
             case ONE_SECOND -> true;
             case FIVE_SECONDS -> ct.getSecond() % 5 == 0;
@@ -390,11 +313,6 @@ public class Stock {
         this.min = value;
         this.max = value;
     }
-
-    public void setLivePriceSource(PriceSource livePriceSource) {
-        this.livePriceSource = livePriceSource;
-    }
-
 
     /**
      * Returns the raw data from the historical hashmap.
@@ -450,12 +368,12 @@ public class Stock {
         return openTime;
     }
 
-    public Container<Double> getProgressContainer() {
-        return progressContainer;
+    public Container<Double> getSaveProgress() {
+        return saveProgress;
     }
 
-    public boolean isProgressActive() {
-        return progressActive;
+    public boolean isSaving() {
+        return saving;
     }
 
     public PriceSource getLivePriceSource() {
@@ -470,7 +388,7 @@ public class Stock {
         return extendedHours;
     }
 
-    public TimeFrame getTimeFrame() {
+    public DownloadTimeFrame getTimeFrame() {
         return timeFrame;
     }
 

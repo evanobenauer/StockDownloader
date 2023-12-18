@@ -7,13 +7,13 @@ import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.util.render.QuickDraw;
-import com.ejo.stockdownloader.data.Stock;
+import com.ejo.stockdownloader.data.LiveDownloadStock;
 
-public class CandleUI extends ElementUI {
+public class LiveDownloadCandle extends ElementUI {
 
     private float[] data;
 
-    private final Stock stock;
+    private final LiveDownloadStock stock;
     private final DateTime dateTime;
 
     private final double x, focusY, focusPrice;
@@ -27,7 +27,7 @@ public class CandleUI extends ElementUI {
     private ColorE colorNull;
 
     //Historical Candle
-    public CandleUI(Stock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
+    public LiveDownloadCandle(LiveDownloadStock stock, DateTime dateTime, double x, double focusY, double focusPrice, double width, Vector scale) {
         super(Vector.NULL, true, true);
         this.stock = stock;
         this.dateTime = dateTime;
@@ -47,7 +47,7 @@ public class CandleUI extends ElementUI {
     }
 
     //Current Candle. Current candles have a dateTime of NULL
-    public CandleUI(Stock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
+    public LiveDownloadCandle(LiveDownloadStock stock, double x, double focusY, double focusPrice, double width, Vector scale) {
         this(stock, stock.getOpenTime(), x, focusY, focusPrice, width, scale);
     }
 
@@ -86,24 +86,20 @@ public class CandleUI extends ElementUI {
 
     //Data is updated like this so that there are not many calls to stock get methods as those are not as efficient
     private void updateData() {
-        if (getOpenTime().equals(getStock().getOpenTime())) {
-            data = new float[]{getStock().getOpen(), getStock().getPrice(), getStock().getMin(), getStock().getMax()};
-        } else {
-            data = getStock().getData(getOpenTime());
-        }
+        data = getStock().getData(getOpenTime());
     }
 
-    public CandleUI setGreen(ColorE color) {
+    public LiveDownloadCandle setGreen(ColorE color) {
         this.colorGreen = color;
         return this;
     }
 
-    public CandleUI setRed(ColorE color) {
+    public LiveDownloadCandle setRed(ColorE color) {
         this.colorRed = color;
         return this;
     }
 
-    public CandleUI setColorNull(ColorE color) {
+    public LiveDownloadCandle setColorNull(ColorE color) {
         this.colorNull = color;
         return this;
     }
@@ -160,7 +156,7 @@ public class CandleUI extends ElementUI {
         return dateTime;
     }
 
-    public Stock getStock() {
+    public LiveDownloadStock getStock() {
         return stock;
     }
 

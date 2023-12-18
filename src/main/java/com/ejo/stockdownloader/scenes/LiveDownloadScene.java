@@ -12,53 +12,54 @@ import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.SliderUI;
 import com.ejo.glowui.util.Util;
+import com.ejo.glowui.util.render.Fonts;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
-import com.ejo.stockdownloader.data.Stock;
+import com.ejo.stockdownloader.data.LiveDownloadStock;
 import com.ejo.stockdownloader.util.DownloadDrawUtil;
-import com.ejo.stockdownloader.util.StockUtil;
-import com.ejo.stockdownloader.render.CandleUI;
+import com.ejo.stockdownloader.util.DownloadStockUtil;
+import com.ejo.stockdownloader.render.LiveDownloadCandle;
 
 import java.awt.*;
 
 public class LiveDownloadScene extends Scene {
 
-    private final Stock stock;
+    private final LiveDownloadStock stock;
 
-    private final SideBarUI bottomBar;
+    private final SideBarUI barBottomBar;
 
-    private final ProgressBarUI<Double> candlePercent;
-    private final TextUI dateTime;
-    private final SliderUI<Integer> secAdjust;
+    private final ProgressBarUI<Double> progressBarCandlePercent;
+    private final TextUI textDateTime;
+    private final SliderUI<Integer> sliderSecAdjust;
 
-    private final SliderUI<Double> scaleSlider;
-    private final Container<Double> scaleY;
+    private final SliderUI<Double> sliderPriceScale;
+    private final Container<Double> priceScale;
 
-    private final ButtonUI saveButton;
-    private final ButtonUI exitButton;
+    private final ButtonUI buttonSave;
+    private final ButtonUI buttonExit;
 
-    private final StopWatch saveWatch = new StopWatch();
-    private final StopWatch forceFrameWatch = new StopWatch();
+    private final StopWatch stopWatchSave = new StopWatch();
+    private final StopWatch stopWatchForceFrame = new StopWatch();
 
-    public LiveDownloadScene(Stock stock) {
+    public LiveDownloadScene(LiveDownloadStock stock) {
         super("Candle Scene");
         this.stock = stock;
-        this.scaleY = new Container<>(200d);
+        this.priceScale = new Container<>(200d);
 
         App.getWindow().setEconomic(true);
 
         addElements(
-                saveButton = new ButtonUI("Force Save", Vector.NULL, new Vector(100, 40), new ColorE(0, 125, 200, 200), ButtonUI.MouseButton.LEFT,() -> {
+                buttonSave = new ButtonUI("Force Save", Vector.NULL, new Vector(100, 40), new ColorE(0, 125, 200, 200), ButtonUI.MouseButton.LEFT,() -> {
                     Thread thread = new Thread(() -> System.out.println(stock.saveHistoricalData() ? "Saved" : "Could Not Save"));
                     thread.setDaemon(true);
                     thread.start();
                 }),
-                exitButton = new ButtonUI(Vector.NULL, new Vector(15, 15), new ColorE(200, 0, 0, 255), ButtonUI.MouseButton.LEFT, () -> getWindow().setScene(new TitleScene())),
-                bottomBar = new SideBarUI(SideBarUI.Type.BOTTOM, 60,true,new ColorE(25, 25, 25, 255),
-                        candlePercent = new ProgressBarUI<>(new Vector(10,22), new Vector(200, 20), ColorE.BLUE, stock.getClosePercent(), 0, 1),
-                        scaleSlider = new SliderUI<>("Scale", Vector.NULL, new Vector(200, 22), ColorE.BLUE, scaleY, 1d, 2000d, 10d, SliderUI.Type.FLOAT, true),
-                        secAdjust = new SliderUI<>("Seconds", new Vector(145, 8), new Vector(65, 10), ColorE.BLUE, StockUtil.SECOND_ADJUST, -10, 10, 1, SliderUI.Type.INTEGER, true),
-                        dateTime = new TextUI(String.valueOf(StockUtil.getAdjustedCurrentTime()),new Font("Arial",Font.PLAIN,14),candlePercent.getPos().getAdded(0,-18),ColorE.WHITE))
+                buttonExit = new ButtonUI(Vector.NULL, new Vector(15, 15), new ColorE(200, 0, 0, 255), ButtonUI.MouseButton.LEFT, () -> getWindow().setScene(new TitleScene())),
+                barBottomBar = new SideBarUI(SideBarUI.Type.BOTTOM, 60,true,new ColorE(25, 25, 25, 255),
+                        progressBarCandlePercent = new ProgressBarUI<>(new Vector(10,22), new Vector(200, 20), ColorE.BLUE, stock.getClosePercent(), 0, 1),
+                        sliderPriceScale = new SliderUI<>("Scale", Vector.NULL, new Vector(200, 22), ColorE.BLUE, priceScale, 1d, 2000d, 10d, SliderUI.Type.FLOAT, true),
+                        sliderSecAdjust = new SliderUI<>("Seconds", new Vector(145, 8), new Vector(65, 10), ColorE.BLUE, DownloadStockUtil.SECOND_ADJUST, -10, 10, 1, SliderUI.Type.INTEGER, true),
+                        textDateTime = new TextUI(String.valueOf(DownloadStockUtil.getAdjustedCurrentTime()),new Font("Arial",Font.PLAIN,14), progressBarCandlePercent.getPos().getAdded(0,-18),ColorE.WHITE))
         );
     }
 
@@ -73,14 +74,14 @@ public class LiveDownloadScene extends Scene {
             double candleSpace = 4;
             double focusY = getSize().getY() / 2;
             double focusPrice = stock.getPrice();
-            Vector candleScale = new Vector(1, scaleY.get());
-            DownloadDrawUtil.drawDownloadCandles(this,stock,StockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
+            Vector candleScale = new Vector(1, priceScale.get());
+            DownloadDrawUtil.drawDownloadCandles(this,stock, DownloadStockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
 
             double linePriceBoxHeight = 15;
 
             //Draw Live Price Line
-            CandleUI liveCandleColor = new CandleUI(stock, 0, 0,0, 0, Vector.NULL);
-            drawPriceLine(stock.getPrice(),getSize().getY() / 2,linePriceBoxHeight,new ColorE(liveCandleColor.getColor().getRed(), liveCandleColor.getColor().getGreen(), liveCandleColor.getColor().getBlue(), 200));
+            ColorE liveCandleColor = new LiveDownloadCandle(stock, 0, 0,0, 0, Vector.NULL).getColor().alpha(200);
+            drawPriceLine(stock.getPrice(),getSize().getY() / 2,linePriceBoxHeight,liveCandleColor);
 
             //Draw Hover Price Line and Tag
             double yPrice = (focusY - getWindow().getScaledMousePos().getY()) / candleScale.getY() + focusPrice;
@@ -96,7 +97,16 @@ public class LiveDownloadScene extends Scene {
         super.draw();
 
         //Draw X for Exit Button
-        QuickDraw.drawText("X",new Font("Arial",Font.PLAIN,14),exitButton.getPos().getAdded(3,0),ColorE.WHITE);
+        QuickDraw.drawText("X",new Font("Arial",Font.PLAIN,14), buttonExit.getPos().getAdded(3,-2),ColorE.WHITE);
+
+
+        if (stock.isSaving()) {
+            ProgressBarUI<Double> progressBar = new ProgressBarUI<>(Vector.NULL,new Vector(150,20),ColorE.BLUE,stock.getSaveProgress(),0,1);
+            progressBar.setPos(new Vector(2,2));
+            QuickDraw.drawRect(progressBar.getPos(),progressBar.getSize(),ColorE.BLACK);
+            progressBar.draw();
+            QuickDraw.drawText("Saving...", Fonts.getDefaultFont(18),progressBar.getPos().getAdded(4,-3),ColorE.WHITE);
+        }
     }
 
     @Override
@@ -104,35 +114,35 @@ public class LiveDownloadScene extends Scene {
         super.tick();
 
         //Update anchored elements
-        exitButton.setPos(new Vector(0, 0));
-        saveButton.setPos(new Vector(getSize().getX() - saveButton.getSize().getX() - 4, 5));
-        scaleSlider.setPos(new Vector(getSize().getX() - scaleSlider.getSize().getX() - 10, 20));
+        buttonExit.setPos(new Vector(0, 0));
+        buttonSave.setPos(new Vector(getSize().getX() - buttonSave.getSize().getX() - 4, 5));
+        sliderPriceScale.setPos(new Vector(getSize().getX() - sliderPriceScale.getSize().getX() - 10, 20));
 
         //Update Current Time Text
-        dateTime.setText(String.valueOf(StockUtil.getAdjustedCurrentTime()));
+        textDateTime.setText(String.valueOf(DownloadStockUtil.getAdjustedCurrentTime()));
 
-        //Update all stock data
-        stock.updateLiveData(0.5,true);
+        //Update all stock data (Have this be either .5s or 1s depending on how often the internet can handle)
+        stock.updateLiveData(1,true);
 
         //Save stored data every minute
-        saveWatch.start();
-        if (saveWatch.hasTimePassedS(60)) {
+        stopWatchSave.start();
+        if (stopWatchSave.hasTimePassedS(5) && stock.shouldClose()) {
             System.out.println("Trying to save data...");
             Thread thread = new Thread(() -> System.out.println(stock.saveHistoricalData() ? "Saved" : "Could Not Save"));
             thread.setDaemon(true);
             thread.start();
-            saveWatch.restart();
+            stopWatchSave.restart();
         }
 
         //Forces the program to run at 2fps even in economic mode
-        if (StockUtil.isPriceActive(stock.isExtendedHours(),StockUtil.getAdjustedCurrentTime())) {
-            forceFrameWatch.start();
-            if (forceFrameWatch.hasTimePassedS(.5)) {
+        if (DownloadStockUtil.isPriceActive(stock.isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime())) {
+            stopWatchForceFrame.start();
+            if (stopWatchForceFrame.hasTimePassedS(.5)) {
                 Util.forceRenderFrame();
-                forceFrameWatch.restart();
+                stopWatchForceFrame.restart();
             }
         } else {
-            forceFrameWatch.stop();
+            stopWatchForceFrame.stop();
         }
     }
 

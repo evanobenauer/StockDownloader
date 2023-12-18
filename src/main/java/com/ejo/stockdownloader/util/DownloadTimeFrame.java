@@ -1,6 +1,6 @@
 package com.ejo.stockdownloader.util;
 
-public enum TimeFrame {
+public enum DownloadTimeFrame {
 
     ONE_SECOND("1sec", 1),
     FIVE_SECONDS("5sec", 5),
@@ -17,7 +17,7 @@ public enum TimeFrame {
     private final String tag;
     private final int seconds;
 
-    TimeFrame(String tag, int seconds) {
+    DownloadTimeFrame(String tag, int seconds) {
         this.tag = tag;
         this.seconds = seconds;
     }
@@ -33,5 +33,12 @@ public enum TimeFrame {
     @Override
     public String toString() {
         return getTag();
+    }
+
+    public static DownloadTimeFrame getFromTag(String tag) {
+        for (DownloadTimeFrame timeFrame : DownloadTimeFrame.values()) {
+            if (tag.equals(timeFrame.getTag())) return timeFrame;
+        }
+        return null;
     }
 }

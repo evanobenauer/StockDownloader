@@ -1,12 +1,12 @@
 package com.ejo.stockdownloader.data.api;
 
 import com.ejo.glowlib.setting.Container;
-import com.ejo.stockdownloader.util.TimeFrame;
+import com.ejo.stockdownloader.util.DownloadTimeFrame;
 
 public abstract class APIDownloader {
 
     private final String ticker;
-    private final TimeFrame timeFrame;
+    private final DownloadTimeFrame timeFrame;
     private final boolean extendedHours;
 
     //downloadProgress is on a scale of 0 to 1
@@ -16,7 +16,7 @@ public abstract class APIDownloader {
     private final Container<Boolean> downloadFinished = new Container<>(false);
     private final Container<Boolean> downloadSuccess = new Container<>(false);
 
-    public APIDownloader(String ticker, TimeFrame timeFrame, boolean extendedHours) {
+    public APIDownloader(String ticker, DownloadTimeFrame timeFrame, boolean extendedHours) {
         this.ticker = ticker;
         this.timeFrame = timeFrame;
         this.extendedHours = extendedHours;
@@ -63,7 +63,7 @@ public abstract class APIDownloader {
         return extendedHours;
     }
 
-    public TimeFrame getTimeFrame() {
+    public DownloadTimeFrame getTimeFrame() {
         return timeFrame;
     }
 
