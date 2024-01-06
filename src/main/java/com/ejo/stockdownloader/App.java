@@ -3,6 +3,14 @@ package com.ejo.stockdownloader;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowui.Window;
 import com.ejo.stockdownloader.scenes.TitleScene;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 public class App {
 

@@ -67,7 +67,7 @@ public class AlphaVantageDownloader extends APIDownloader {
             downloadFile(String.valueOf(year), getMonthString(month), PATH_MAIN, getDownloadProgress());
 
             //Load the last file, check if error. If so, break and set limit reached
-            ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
+            ArrayList<String[]> lastFile = CSVManager.getDataFromCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + getMonthString(month) + ".csv");
             if (lastFile.get(0)[0].contains("{")) { //Requests will max out at 25/day
                 FileManager.deleteFile(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
                 endDownloadContainers(false);
@@ -75,7 +75,7 @@ public class AlphaVantageDownloader extends APIDownloader {
                 return;
             }
 
-            formatStockCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + month + ".csv");
+            formatStockCSV(PATH_MAIN, FILE_PREFIX + "_" + year + "-" + getMonthString(month) + ".csv");
             endDownloadContainers(true);
         } catch (IOException e) {
             endDownloadContainers(false);
