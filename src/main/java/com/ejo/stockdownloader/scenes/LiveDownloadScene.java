@@ -11,7 +11,7 @@ import com.ejo.glowui.scene.elements.SideBarUI;
 import com.ejo.glowui.scene.elements.TextUI;
 import com.ejo.glowui.scene.elements.widget.ButtonUI;
 import com.ejo.glowui.scene.elements.widget.SliderUI;
-import com.ejo.glowui.util.Util;
+import com.ejo.glowui.util.UIUtil;
 import com.ejo.glowui.util.render.Fonts;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.App;
@@ -138,7 +138,7 @@ public class LiveDownloadScene extends Scene {
         if (DownloadStockUtil.isPriceActive(stock.isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime())) {
             stopWatchForceFrame.start();
             if (stopWatchForceFrame.hasTimePassedS(.5)) {
-                Util.forceRenderFrame();
+                UIUtil.forceEconRenderFrame();
                 stopWatchForceFrame.restart();
             }
         } else {
