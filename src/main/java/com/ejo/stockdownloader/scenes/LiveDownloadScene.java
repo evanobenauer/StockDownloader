@@ -5,6 +5,7 @@ import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.StopWatch;
+import com.ejo.glowlib.util.TimeUtil;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ProgressBarUI;
 import com.ejo.glowui.scene.elements.SideBarUI;
@@ -58,8 +59,8 @@ public class LiveDownloadScene extends Scene {
                 barBottomBar = new SideBarUI(SideBarUI.Type.BOTTOM, 60,true,new ColorE(25, 25, 25, 255),
                         progressBarCandlePercent = new ProgressBarUI<>(new Vector(10,22), new Vector(200, 20), ColorE.BLUE, stock.getClosePercent(), 0, 1),
                         sliderPriceScale = new SliderUI<>("Scale", Vector.NULL, new Vector(200, 22), ColorE.BLUE, priceScale, 1d, 2000d, 10d, SliderUI.Type.FLOAT, true),
-                        sliderSecAdjust = new SliderUI<>("Seconds", new Vector(145, 8), new Vector(65, 10), ColorE.BLUE, DownloadStockUtil.SECOND_ADJUST, -10, 10, 1, SliderUI.Type.INTEGER, true),
-                        textDateTime = new TextUI(String.valueOf(DownloadStockUtil.getAdjustedCurrentTime()),new Font("Arial",Font.PLAIN,14), progressBarCandlePercent.getPos().getAdded(0,-18),ColorE.WHITE))
+                        sliderSecAdjust = new SliderUI<>("Seconds", new Vector(145, 8), new Vector(65, 10), ColorE.BLUE, TimeUtil.SECOND_ADJUST, -10, 10, 1, SliderUI.Type.INTEGER, true),
+                        textDateTime = new TextUI(String.valueOf(TimeUtil.getAdjustedCurrentTime()),new Font("Arial",Font.PLAIN,14), progressBarCandlePercent.getPos().getAdded(0,-18),ColorE.WHITE))
         );
     }
 
@@ -75,7 +76,7 @@ public class LiveDownloadScene extends Scene {
             double focusY = getSize().getY() / 2;
             double focusPrice = stock.getPrice();
             Vector candleScale = new Vector(1, priceScale.get());
-            DownloadDrawUtil.drawDownloadCandles(this,stock, DownloadStockUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
+            DownloadDrawUtil.drawDownloadCandles(this,stock, TimeUtil.getAdjustedCurrentTime(),focusPrice,focusY,candleSpace,candleWidth,candleScale);
 
             double linePriceBoxHeight = 15;
 
@@ -119,7 +120,7 @@ public class LiveDownloadScene extends Scene {
         sliderPriceScale.setPos(new Vector(getSize().getX() - sliderPriceScale.getSize().getX() - 10, 20));
 
         //Update Current Time Text
-        textDateTime.setText(String.valueOf(DownloadStockUtil.getAdjustedCurrentTime()));
+        textDateTime.setText(String.valueOf(TimeUtil.getAdjustedCurrentTime()));
 
         //Update all stock data (Have this be either .5s or 1s depending on how often the internet can handle)
         stock.updateLiveData(1,true);
@@ -135,7 +136,7 @@ public class LiveDownloadScene extends Scene {
         }
 
         //Forces the program to run at 2fps even in economic mode
-        if (DownloadStockUtil.isPriceActive(stock.isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime())) {
+        if (DownloadStockUtil.isPriceActive(stock.isExtendedHours(), TimeUtil.getAdjustedCurrentTime())) {
             stopWatchForceFrame.start();
             if (stopWatchForceFrame.hasTimePassedS(.5)) {
                 UIUtil.forceEconRenderFrame();

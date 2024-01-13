@@ -4,6 +4,7 @@ import com.ejo.glowlib.math.MathE;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowlib.time.DateTime;
+import com.ejo.glowlib.util.TimeUtil;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.util.render.QuickDraw;
 import com.ejo.stockdownloader.data.LiveDownloadStock;
@@ -20,7 +21,7 @@ public class DownloadDrawUtil {
         //Define Candle List
         ArrayList<LiveDownloadCandle> listCandle = new ArrayList<>();
 
-        DateTime openTime = endTime.equals(DownloadStockUtil.getAdjustedCurrentTime()) ? stock.getOpenTime() : endTime;
+        DateTime openTime = endTime.equals(TimeUtil.getAdjustedCurrentTime()) ? stock.getOpenTime() : endTime;
 
         //Create Historical Candles
         try {

@@ -5,6 +5,7 @@ import com.ejo.glowlib.misc.DoOnce;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
 import com.ejo.glowlib.time.StopWatch;
+import com.ejo.glowlib.util.TimeUtil;
 import com.ejo.stockdownloader.util.DownloadStockUtil;
 import com.ejo.stockdownloader.util.DownloadTimeFrame;
 
@@ -78,7 +79,7 @@ public class LiveDownloadStock {
      */
     public void updateLiveData(double liveDelayS, boolean includePriceUpdate) {
         //Updates the progress bar of each segmentation
-        if (DownloadStockUtil.isPriceActive(isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime())) updateClosePercent();
+        if (DownloadStockUtil.isPriceActive(isExtendedHours(), TimeUtil.getAdjustedCurrentTime())) updateClosePercent();
 
         //Check if the stock should update. If not, don't run the method
         if (!shouldUpdate()) return;
@@ -146,7 +147,7 @@ public class LiveDownloadStock {
      */
     private void updateOpen() {
         this.doOpen.run(() -> {
-            this.openTime = DownloadStockUtil.getAdjustedCurrentTime();
+            this.openTime = TimeUtil.getAdjustedCurrentTime();
             setAllData(getPrice());
         });
     }
@@ -161,7 +162,7 @@ public class LiveDownloadStock {
             return;
         }
         this.doClose.run(() -> {
-            DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
+            DateTime ct = TimeUtil.getAdjustedCurrentTime();
             //Save Live Data as Historical [Data is stored as (DATETIME,OPEN,CLOSE,MIN,MAX)]
             float[] timeFrameData = {getOpen(), getPrice(), getMin(), getMax()};
             DateTime openTime = new DateTime(ct.getYear(), ct.getMonth(), ct.getDay(), ct.getHour(), ct.getMinute(), ct.getSecond() - getTimeFrame().getSeconds());
@@ -187,7 +188,7 @@ public class LiveDownloadStock {
      * Updates the percentage complete for the current stock candle
      */
     private void updateClosePercent() {
-        DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
+        DateTime ct = TimeUtil.getAdjustedCurrentTime();
         double totalPercent = 0;
 
         //Second Percent
@@ -277,7 +278,7 @@ public class LiveDownloadStock {
         if (!this.shouldStartUpdates) return false;
 
         //Only allows for data collection during trading hours
-        return DownloadStockUtil.isPriceActive(isExtendedHours(), DownloadStockUtil.getAdjustedCurrentTime());
+        return DownloadStockUtil.isPriceActive(isExtendedHours(), TimeUtil.getAdjustedCurrentTime());
     }
 
     /**
@@ -286,7 +287,7 @@ public class LiveDownloadStock {
      * @return
      */
     public boolean shouldClose() {
-        DateTime ct = DownloadStockUtil.getAdjustedCurrentTime();
+        DateTime ct = TimeUtil.getAdjustedCurrentTime();
         return switch (getTimeFrame()) {
             case ONE_SECOND -> true;
             case FIVE_SECONDS -> ct.getSecond() % 5 == 0;

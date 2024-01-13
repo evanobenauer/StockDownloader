@@ -4,9 +4,9 @@ import com.ejo.glowlib.file.CSVManager;
 import com.ejo.glowlib.file.FileManager;
 import com.ejo.glowlib.setting.Container;
 import com.ejo.glowlib.time.DateTime;
+import com.ejo.glowlib.util.TimeUtil;
 import com.ejo.stockdownloader.util.DownloadStockUtil;
 import com.ejo.stockdownloader.util.DownloadTimeFrame;
-import com.ejo.stockdownloader.util.TimeUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -145,7 +145,7 @@ public class AlphaVantageDownloader extends APIDownloader {
     }
 
     public void downloadAll() {
-        download(2000, 1, DownloadStockUtil.getAdjustedCurrentTime().getYear(), DownloadStockUtil.getAdjustedCurrentTime().getMonth());
+        download(2000, 1, TimeUtil.getAdjustedCurrentTime().getYear(), TimeUtil.getAdjustedCurrentTime().getMonth());
     }
 
     public static void formatStockCSV(String directory, String name) {
