@@ -10,11 +10,14 @@ import java.io.IOException;
 
 public class DownloadStockUtil {
 
-    private static final String WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36";
+    private final static String WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     public static float getWebScrapePrice(String url, String attributeKey, String attributeValue, int priceIndex) throws IOException {
         try {
-            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT)
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.5")
+                    .timeout(5 * 1000).get();
             Elements cssElements = doc.getElementsByAttributeValue(attributeKey, attributeValue);
             String priceString = cssElements.get(priceIndex).text().replace("$", "");
             return priceString.equals("") ? -1 : Float.parseFloat(priceString);
@@ -25,7 +28,10 @@ public class DownloadStockUtil {
 
     public static float getWebScrapePrice(String url, String cssQuery, int priceIndex) throws IOException {
         try {
-            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT).timeout(5 * 1000).get();
+            Document doc = Jsoup.connect(url).userAgent(WEB_USER_AGENT)
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.5")
+                    .timeout(5 * 1000).get();
             Elements cssElements = doc.select(cssQuery);
             String priceString = cssElements.get(priceIndex).text().replace("$", "");
             return priceString.equals("") ? -1 : Float.parseFloat(priceString);

@@ -39,7 +39,7 @@ public class TitleScene extends Scene {
 
     //Live Data Settings
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive", false);
-    private final Setting<LiveDownloadStock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", LiveDownloadStock.PriceSource.MARKETWATCH);
+    private final Setting<LiveDownloadStock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", LiveDownloadStock.PriceSource.YAHOOFINANCE);
 
     //Api Settings
     private final Setting<String> api = new Setting<>("api", "AlphaVantage");

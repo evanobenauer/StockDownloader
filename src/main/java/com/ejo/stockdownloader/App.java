@@ -3,12 +3,16 @@ package com.ejo.stockdownloader;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowui.Window;
 import com.ejo.stockdownloader.scenes.TitleScene;
+import com.ejo.stockdownloader.util.DownloadStockUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 

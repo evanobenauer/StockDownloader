@@ -110,7 +110,7 @@ public class LiveDownloadStock {
                 }
                 case YAHOOFINANCE -> {
                     String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                    livePrice = DownloadStockUtil.getWebScrapePrice(url2, "data-test", "qsp-price", 0);
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url2, "data-testid", "qsp-price", 0);
                 }
                 default -> livePrice = -1;
             }
