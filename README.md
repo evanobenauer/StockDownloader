@@ -35,7 +35,7 @@ The mode will procerudally generate a CSV file of stock data that can be used by
 - As the downloader creates a CSV file, it will display the stock data as candles on the GUI screen.
 - It will also display the seconds left of the candle, the current price, and can display all candle data through a hovered tooltip
   
-![title](img/livescreen.gif)
+![title](img/livesdownload.gif)
 
 
 *Source*
@@ -57,20 +57,22 @@ The only current API option that is linked is AlphaVantage (You must provide the
 Download files from Live and API are compiled into the same formatted .csv file
 
 *File Naming*
-![title](img/FileTypes.png)
-
 - All files are stored in the stock_data folder located at the root of the run project
 - File is named "TICKER_TIMEFRAME_YEAR_MONTH"
 
-*File Inside*
-![title](img/FileData.png)
+![title](img/FileTypes.png)
 
+
+*File Inside*
 - All files are formatted, line by line in the order for the CSV
   - DatetimeID (year-month-day-hour-minute-second)
   - open
   - close
   - min
   - max
+
+![title](img/FileData.png)
+
 
 
 
