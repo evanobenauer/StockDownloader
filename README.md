@@ -13,3 +13,8 @@ The program can run on any always-on server in order to constantly recieve and a
 PLANS:
 Eventually, this program will have the capability to be retrieved by other devices across the internet.
 Portions of the program will be able to be adapted to a statistical analysis program in the future
+
+# Live Download Mode
+Put Data Here
+# API Download Mode
+
