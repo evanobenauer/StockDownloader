@@ -39,7 +39,7 @@ public class TitleScene extends Scene {
 
     //Live Data Settings
     private final Setting<Boolean> liveExtendedHours = new Setting<>("extendedHoursLive", false);
-    private final Setting<LiveDownloadStock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", LiveDownloadStock.PriceSource.YAHOOFINANCE);
+    private final Setting<LiveDownloadStock.PriceSource> livePriceSource = new Setting<>("priceSourceLive", LiveDownloadStock.PriceSource.DEBUG);
 
     //Api Settings
     private final Setting<String> api = new Setting<>("api", "AlphaVantage");
@@ -61,7 +61,7 @@ public class TitleScene extends Scene {
     private final TextUI title = new TextUI("Stock Downloader", new Font("Arial Black", Font.BOLD, 50), Vector.NULL, ColorE.WHITE);
 
     private final TextFieldUI stockTickerField = new TextFieldUI(Vector.NULL, new Vector(100, 20), ColorE.WHITE, stockTicker, "Stock", false);
-    private final ModeCycleUI<DownloadTimeFrame> timeFrameMode = new ModeCycleUI<>(Vector.NULL, new Vector(100, 20), ColorE.BLUE, timeFrame, DownloadTimeFrame.ONE_SECOND, DownloadTimeFrame.FIVE_SECONDS, DownloadTimeFrame.THIRTY_SECONDS, DownloadTimeFrame.ONE_MINUTE, DownloadTimeFrame.FIVE_MINUTES, DownloadTimeFrame.THIRTY_MINUTES, DownloadTimeFrame.ONE_HOUR, DownloadTimeFrame.TWO_HOUR, DownloadTimeFrame.FOUR_HOUR, DownloadTimeFrame.ONE_DAY);
+    private final ModeCycleUI<DownloadTimeFrame> timeFrameMode = new ModeCycleUI<>(Vector.NULL, new Vector(100, 20), ColorE.BLUE, timeFrame, DownloadTimeFrame.values());
 
     private final ProgressBarUI<Double> progressBarApiDownload = new ProgressBarUI<>(Vector.NULL, new Vector(200, 20), ColorE.BLUE, new Container<>(0d), 0, 1);
     private final TextUI warningText = new TextUI("", Fonts.getDefaultFont(20), Vector.NULL, ColorE.WHITE);

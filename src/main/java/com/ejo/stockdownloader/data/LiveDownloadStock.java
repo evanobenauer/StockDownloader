@@ -109,8 +109,16 @@ public class LiveDownloadStock {
                     livePrice = DownloadStockUtil.getWebScrapePrice(url, "bg-quote.value", 0);
                 }
                 case YAHOOFINANCE -> {
-                    String url2 = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
-                    livePrice = DownloadStockUtil.getWebScrapePrice(url2, "data-testid", "qsp-price", 0);
+                    String url = "https://finance.yahoo.com/quote/" + getTicker() + "?p=" + getTicker();
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url, "data-testid", "qsp-price", 0);
+                }
+                case INVESTING -> {
+                    String url = "https://www.investing.com/etfs/spdr-s-p-500";
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url, "data-test", "instrument-price-last", 0);
+                }
+                case DEBUG -> {
+                    String url = "https://www.google.com/finance/quote/SPY:NYSEARCA";
+                    livePrice = DownloadStockUtil.getWebScrapePrice(url, "jsname", "ip75Cb", 10);
                 }
                 default -> livePrice = -1;
             }
@@ -291,6 +299,7 @@ public class LiveDownloadStock {
         return switch (getTimeFrame()) {
             case ONE_SECOND -> true;
             case FIVE_SECONDS -> ct.getSecond() % 5 == 0;
+            case FIFTEEN_SECONDS -> ct.getSecond() % 15 == 0;
             case THIRTY_SECONDS -> ct.getSecond() % 30 == 0;
             case ONE_MINUTE -> ct.getSecond() == 0;
             case FIVE_MINUTES -> ct.getMinute() % 5 == 0 && ct.getSecond() == 0;
@@ -400,7 +409,9 @@ public class LiveDownloadStock {
 
     public enum PriceSource {
         MARKETWATCH("MarketWatch"),
-        YAHOOFINANCE("YahooFinance");
+        YAHOOFINANCE("YahooFinance"),
+        INVESTING("Investing.com"),
+        DEBUG("DEBUG");
 
         private final String string;
 

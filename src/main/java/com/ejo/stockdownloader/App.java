@@ -24,7 +24,13 @@ public class App {
             new Vector(800,600),
             new TitleScene(), true,4,60,60);
 
-    public static void main(String[] args) {
+    private final static String WEB_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+    public static void main(String[] args) throws IOException {
+        //String url = "https://www.google.com/finance/quote/SPY:NYSEARCA";
+        //float livePrice = DownloadStockUtil.getWebScrapePrice(url, "jsname", "ip75Cb", 10);
+        //System.out.println(livePrice);
+
         window.run();
         window.close();
     }

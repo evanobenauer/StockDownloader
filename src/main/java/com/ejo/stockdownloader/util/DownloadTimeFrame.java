@@ -4,6 +4,7 @@ public enum DownloadTimeFrame {
 
     ONE_SECOND("1sec", 1),
     FIVE_SECONDS("5sec", 5),
+    FIFTEEN_SECONDS("15sec", 15),
     THIRTY_SECONDS("30sec", 30),
     ONE_MINUTE("1min", 60),
     FIVE_MINUTES("5min", 5 * 60),
